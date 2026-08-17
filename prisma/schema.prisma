@@ -21,6 +21,7 @@ model GrupoPesquisa {
   sobre         String?
   contato       String[]
   pesquisadores Pesquisador[]
+  users         User[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -33,4 +34,14 @@ model Pesquisador {
   lattesId          String
   grupoPesquisaId   String
   grupoPesquisa     GrupoPesquisa @relation(fields: [grupoPesquisaId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  grupoId   String?
+  grupo     GrupoPesquisa? @relation(fields: [grupoId], references: [id])
+  criadoEm  DateTime @default(now())
 }
