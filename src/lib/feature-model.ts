@@ -153,12 +153,55 @@ export const featureModel: Feature[] = [
     }
 ]
 
-export function validarSelecao(ids: string[]){
+interface ValidacaoResultado {
+    valido: boolean,
+    erros : string[]
+}
+
+export function validarSelecao(features: Feature[]) : ValidacaoResultado {
+    const erros : string[] = []
+    const selectedIds = new Set(features.map((f) => f.id));
+
     // CONFERIR SE TODAS AS OBRIGATÓRIAS FORAM SELECIONADAS
+    const obrigatorias = featureModel.filter(
+        (f) => f.tipo === "obrigatorio" || f.prioridade === "must"
+    );
+
+    for (const f of obrigatorias) {
+        if (!selectedIds.has(f.id)) {
+            erros.push(`A funcionalidade obrigatória "${f.name}" (${f.id}) deve estar selecionada.`);
+        }
+    }
     
     // CONFERIR SE ALGUMA QUE REQUER FOI SELECIONADA SEM A FEATURE PAI
+    for (const feature of features) {
+        if (feature.requer && feature.requer.length > 0) {
+            if (feature.tipo == "ou"){
+                const temPeloMenosUmRequer = feature.requer.some(requer => selectedIds.has(requer))
+                if (!temPeloMenosUmRequer) {
+                    erros.push(`A funcionalidade "${feature.name}" (${feature.id}) requer pelo menos uma das funcionalidades "${feature.requer}".`);
+                }
+            }else{
+                for (const requer of feature.requer) {
+                    if (!selectedIds.has(requer)) {
+                        erros.push(`A funcionalidade "${feature.name}" (${feature.id}) requer a funcionalidade "${requer}".`);
+                    }
+                }
+            }
+        }
 
-    // CONFERIR SE ALGUMA QUE EXCLUI FOI SELECIONADA COM A FEATURE PAI
+        if(feature.exclui && feature.exclui.length > 0){
+            for (const exclui of feature.exclui) {
+                if (selectedIds.has(exclui)) {
+                    erros.push(`A funcionalidade "${feature.name}" (${feature.id}) exclui a funcionalidade "${exclui}".`);
+                }
+            }
+        }
+    }
 
     // RETORNO BOOLEAN COM ERROS, SE TIVER
+    return {
+        valido: erros.length === 0,
+        erros,
+    }
 }
