@@ -1,6 +1,15 @@
 import { LinhaPesquisa } from './linhaPesquisa';
 import { MembroGrupo } from './researcher';
 
+export interface Estado {
+    id          : string;
+    sigla       : string;
+    nome        : string;
+    regiao      : string;
+    criadoEm    : string;
+    atualizadoEm: string;
+}
+
 export interface Instituicao {
     id          : string;
     nome        : string;
@@ -8,6 +17,18 @@ export interface Instituicao {
     estadoId    : string;
     criadoEm    : string;
     atualizadoEm: string;
+    estado     ?: Estado;
+}
+
+export interface InstituicaoGrupo {
+    grupoId      : string;
+    instituicaoId: string;
+    tipoRelacao  : 'SEDE' | 'PARCEIRA' | string;
+    unidade      : string | null;
+    unidadeUf    : string | null;
+    criadoEm     : string;
+    atualizadoEm : string;
+    instituicao  : Instituicao;
 }
 
 export interface Area {
@@ -32,16 +53,25 @@ export interface ResearchGroup {
     anoFormacao     : number;
     areaPredominante: string;
     repercussao     : string;
+    email           : string | null;
+    telefone        : string | null;
+    website         : string | null;
+    logradouro      : string | null;
+    numero          : string | null;
+    complemento     : string | null;
+    bairro          : string | null;
+    cidade          : string | null;
+    uf              : string | null;
+    cep             : string | null;
+    latitude        : number | null;
+    longitude       : number | null;
     situacao        : 'ATIVO' | 'INATIVO' | string;
-    instituicaoId   : string;
-    
-    // Campos estendidos que vêm apenas no GET /{id}
-    criadoEm         ?: string;
-    atualizadoEm     ?: string;
-    areasConhecimento?: AreaConhecimento[];
-    linhasPesquisa   ?: LinhaPesquisa[];
-    instituicao      ?: Instituicao;
-    membros          ?: MembroGrupo[];
+    criadoEm        : string;
+    atualizadoEm    : string;
+    areasConhecimento: AreaConhecimento[];
+    linhasPesquisa  : LinhaPesquisa[];
+    instituicoes    : InstituicaoGrupo[];
+    membros         : MembroGrupo[];
 }
 
 // Filtros aceitos na listagem (Swagger)

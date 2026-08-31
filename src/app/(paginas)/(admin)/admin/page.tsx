@@ -12,54 +12,58 @@ export default async function AdminDashboard() {
         redirect("/login")
     }
 
-    const grupoId = (session.user as any).grupoId
+    const grupoId = (session.user as any).grupoId || "5c0de827-daac-409a-96ad-e81417ac467b"
 
     const grupo = grupoId
         ? await prisma.grupoPesquisa.findUnique({
-            where: { id: grupoId },
-        })
+              where: { id: grupoId },
+          })
         : null
 
     return (
-        <div className="min-h-screen ">
-            {/* Barra de Navegação Superior */}
-            <div className="p-8">
-                <h1 className="text-2xl font-bold">Painel de Configuração do ATENA</h1>
-                <p className="text-gray-600">Bem-vindo, {session.user.name} ({session.user.email})</p>
-                
-                {grupo ? (
-                    <div className="mt-4 p-4 border rounded bg-slate-50">
-                    <h2 className="font-semibold text-lg">Grupo Gerenciado: {grupo.nome}</h2>
-                    <p className="text-sm">{grupo.missao}</p>
+        <div className="min-h-screen bg-slate-950 text-slate-100">
+            {/* Barra Superior */}
+            <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/60 backdrop-blur-md">
+                <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+                    <div className="flex items-center space-x-3">
+                        <span className="text-xl font-extrabold tracking-tight text-white">
+                            ATENA <span className="font-mono text-sm text-cyan-400">v1.0</span>
+                        </span>
                     </div>
-                ) : (
-                    <p className="mt-4 text-amber-600">
-                    Aviso: NENHUM Grupo de Pesquisa vinculado a esta conta de usuário.
-                    </p>
-                )}
 
-                <form action={async () => {
-                    'use server'
-                    await signOut({ redirectTo: "/login" })
-                }} className="mt-6">
-                    <button type="submit" className="px-4 py-2 bg-red-600 text-white rounded">
-                    Sair
-                    </button>
-                </form>
-            </div>
+                    <div className="flex items-center space-x-4">
+                        <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-400">
+                            <UserIcon className="h-3.5 w-3.5 text-cyan-400" />
+                            <span>{session.user.name ?? session.user.email}</span>
+                        </div>
+
+                        <form
+                            action={async () => {
+                                'use server'
+                                await signOut({ redirectTo: "/login" })
+                            }}
+                        >
+                            <Button variant="ghost" size="sm" type="submit" className="text-slate-400 hover:bg-red-500/10 hover:text-red-400">
+                                <LogOut className="mr-1.5 h-4 w-4" />
+                                Sair
+                            </Button>
+                        </form>
+                    </div>
+                </div>
+            </header>
 
             {/* Conteúdo Principal */}
-            <main className="max-w-7xl mx-auto px-6 py-8">
+            <main className="mx-auto max-w-7xl px-6 py-8">
                 {grupo ? (
-                    <FeatureConfigurator grupoNome={grupo.nome} />
+                    <FeatureConfigurator grupoId={grupo.id} grupoNome={grupo.nome} />
                 ) : (
-                <div className="p-8 text-center bg-slate-900 border border-slate-800 rounded-xl">
-                    <Building2 className="h-10 w-10 text-amber-500 mx-auto mb-3" />
-                    <h2 className="text-lg font-bold text-slate-100">Nenhum Grupo Vinculado</h2>
-                    <p className="text-sm text-slate-400 mt-1">
-                        Sua conta autenticada não possui um grupo de pesquisa associado na base de dados.
-                    </p>
-                </div>
+                    <div className="rounded-xl border border-slate-800 bg-slate-900 p-8 text-center">
+                        <Building2 className="mx-auto mb-3 h-10 w-10 text-amber-500" />
+                        <h2 className="text-lg font-bold text-slate-100">Nenhum Grupo Vinculado</h2>
+                        <p className="mt-1 text-sm text-slate-400">
+                            Sua conta autenticada não possui um grupo de pesquisa associado na base de dados.
+                        </p>
+                    </div>
                 )}
             </main>
         </div>

@@ -1,4 +1,8 @@
-export default function Mission () {
+interface MissionProps {
+    repercussao: string
+}
+
+export default function Mission ({ repercussao }: MissionProps) {
     return(
         <div className="flex flex-col gap-4 items-start px-5 py-6 bg-blue-950 text-white border border-blue-600 rounded-md
             w-50">
@@ -7,3 +11,4 @@ export default function Mission () {
         </div>
     )
 }
+
