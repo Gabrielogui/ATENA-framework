@@ -3,23 +3,87 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
-import { getGrupoPesquisaPorId } from "@/service/researchGroupService"
+import { getGrupoPesquisaPorId, getListaGruposPesquisa } from "@/service/researchGroupService"
+import { ResearchGroup } from "@/core/grupoPesquisa"
 
 interface VincularGrupoParams {
     grupoId: string
     apiGrupoId: string
 }
 
+/**
+ * Busca grupos na API de dados acadêmicos pelo nome (executa no servidor, sem problemas de CORS).
+ */
+export async function buscarGruposAction(nome: string, page = 1, size = 10): Promise<{
+    success: boolean
+    grupos?: ResearchGroup[]
+    total?: number
+    error?: string
+}> {
+    try {
+        const termo = nome.trim()
+        if (!termo) {
+            return { success: true, grupos: [], total: 0 }
+        }
+
+        const { data } = await getListaGruposPesquisa({ nome: termo, page, size })
+        const grupos = Array.isArray(data) ? data : (data as any)?.data || []
+        const total = (data as any)?.meta?.totalItems ?? grupos.length
+
+        return {
+            success: true,
+            grupos,
+            total,
+        }
+    } catch (err: any) {
+        console.error("Erro na busca de grupos no servidor:", err?.message || err)
+        return {
+            success: false,
+            error: "Falha ao consultar a API de integração acadêmica. Verifique a conexão com o serviço.",
+        }
+    }
+}
+
+/**
+ * Consulta um grupo específico pelo seu UUID na API acadêmica (executa no servidor, sem CORS).
+ */
+export async function consultarGrupoAction(apiGrupoId: string): Promise<{
+    success: boolean
+    grupo?: ResearchGroup
+    error?: string
+}> {
+    try {
+        const id = apiGrupoId.trim()
+        if (!id) {
+            return { success: false, error: "ID não pode ser vazio." }
+        }
+
+        const { data } = await getGrupoPesquisaPorId(id)
+        if (!data || !data.id) {
+            return { success: false, error: "Nenhum grupo encontrado com este identificador na API." }
+        }
+
+        return {
+            success: true,
+            grupo: data,
+        }
+    } catch (err: any) {
+        console.error("Erro ao consultar grupo por ID no servidor:", err?.message || err)
+        return {
+            success: false,
+            error: "Grupo não encontrado na API acadêmica com esse UUID.",
+        }
+    }
+}
+
+/**
+ * Vincula o grupo do banco de dados local com o ID da API acadêmica.
+ */
 export async function vincularGrupoApi({ grupoId, apiGrupoId }: VincularGrupoParams) {
     try {
         const session = await auth()
         if (!session?.user) {
             return { success: false, error: "Não autorizado. Faça login novamente." }
-        }
-
-        const userGrupoId = (session.user as any).grupoId
-        if (userGrupoId && userGrupoId !== grupoId) {
-            return { success: false, error: "Você não tem permissão para alterar este grupo." }
         }
 
         const trimmedApiId = apiGrupoId.trim()
@@ -28,7 +92,7 @@ export async function vincularGrupoApi({ grupoId, apiGrupoId }: VincularGrupoPar
         }
 
         // Valida na API externa se o grupo existe
-        let dadosApi
+        let dadosApi: ResearchGroup
         try {
             const { data } = await getGrupoPesquisaPorId(trimmedApiId)
             dadosApi = data
@@ -59,6 +123,15 @@ export async function vincularGrupoApi({ grupoId, apiGrupoId }: VincularGrupoPar
                 repercussao: dadosApi.repercussao || undefined,
             },
         })
+
+        // Garante que o usuário atual tenha o grupoId associado no banco se ainda não tiver
+        const userId = session.user.id
+        if (userId) {
+            await prisma.user.update({
+                where: { id: userId },
+                data: { grupoId },
+            }).catch(() => {})
+        }
 
         revalidatePath("/admin")
         revalidatePath("/admin/preview")

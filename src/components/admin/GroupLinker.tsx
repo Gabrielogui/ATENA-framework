@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { getListaGruposPesquisa, getGrupoPesquisaPorId } from "@/service/researchGroupService"
-import { vincularGrupoApi } from "@/app/actions/grupoActions"
+import { buscarGruposAction, consultarGrupoAction, vincularGrupoApi } from "@/app/actions/grupoActions"
 import { ResearchGroup } from "@/core/grupoPesquisa"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -58,7 +57,7 @@ export function GroupLinker({
     const [errorMsg, setErrorMsg] = useState<string | null>(null)
     const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
-    // Executa a busca textual na API
+    // Executa a busca textual na API via Server Action (sem CORS)
     const handleSearch = async (e?: React.FormEvent) => {
         if (e) e.preventDefault()
         const term = searchTerm.trim()
@@ -70,14 +69,18 @@ export function GroupLinker({
         setSearchSearched(true)
 
         try {
-            const { data } = await getListaGruposPesquisa({ nome: term, size: 10, page: 1 })
-            const groups = Array.isArray(data) ? data : (data as any)?.data || []
-            const total = (data as any)?.meta?.totalItems ?? groups.length
-            setSearchResults(groups)
-            setSearchTotal(total)
+            const result = await buscarGruposAction(term, 1, 15)
+            if (result.success && result.grupos) {
+                setSearchResults(result.grupos)
+                setSearchTotal(result.total ?? result.grupos.length)
+            } else {
+                setErrorMsg(result.error || "Erro ao buscar grupos na API.")
+                setSearchResults([])
+                setSearchTotal(0)
+            }
         } catch (err: any) {
             console.error("Erro na busca de grupos:", err)
-            setErrorMsg("Falha ao comunicar com a API de grupos. Verifique sua conexão.")
+            setErrorMsg("Falha ao comunicar com o servidor. Tente novamente.")
             setSearchResults([])
             setSearchTotal(0)
         } finally {
@@ -85,7 +88,7 @@ export function GroupLinker({
         }
     }
 
-    // Consulta direta por UUID
+    // Consulta direta por UUID via Server Action (sem CORS)
     const handleVerifyDirectId = async () => {
         const id = directId.trim()
         if (!id) return
@@ -96,15 +99,15 @@ export function GroupLinker({
         setDirectPreview(null)
 
         try {
-            const { data } = await getGrupoPesquisaPorId(id)
-            if (data && data.id) {
-                setDirectPreview(data)
+            const result = await consultarGrupoAction(id)
+            if (result.success && result.grupo) {
+                setDirectPreview(result.grupo)
             } else {
-                setErrorMsg("Grupo não encontrado com esse identificador.")
+                setErrorMsg(result.error || "Grupo não encontrado com esse identificador.")
             }
         } catch (err: any) {
             console.error("Erro ao validar ID direto:", err)
-            setErrorMsg("Nenhum grupo encontrado na API com esse UUID. Verifique o código inserido.")
+            setErrorMsg("Falha ao consultar grupo pelo identificador.")
         } finally {
             setVerifyingDirect(false)
         }
@@ -318,7 +321,7 @@ export function GroupLinker({
                             <label className="text-xs font-semibold text-slate-300">
                                 Identificador UUID do Grupo na API
                             </label>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                                 <Input
                                     type="text"
                                     value={directId}
@@ -327,17 +330,31 @@ export function GroupLinker({
                                         setDirectPreview(null)
                                     }}
                                     placeholder="Ex: 5c0de827-daac-409a-96ad-e81417ac467b"
-                                    className="border-slate-800 bg-slate-950 font-mono text-xs sm:text-sm text-white placeholder:text-slate-600"
+                                    className="border-slate-800 bg-slate-950 font-mono text-xs sm:text-sm text-white placeholder:text-slate-600 flex-1"
                                 />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    disabled={verifyingDirect || !directId.trim()}
-                                    onClick={handleVerifyDirectId}
-                                    className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800"
-                                >
-                                    {verifyingDirect ? <Loader2 className="h-4 w-4 animate-spin" /> : "Consultar"}
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        disabled={verifyingDirect || !directId.trim()}
+                                        onClick={handleVerifyDirectId}
+                                        className="border-slate-700 bg-slate-900 text-slate-200 hover:bg-slate-800"
+                                    >
+                                        {verifyingDirect ? <Loader2 className="h-4 w-4 animate-spin" /> : "Consultar"}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        disabled={linkingId === directId.trim() || !directId.trim()}
+                                        onClick={() => handleLinkGroup(directId.trim())}
+                                        className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold"
+                                    >
+                                        {linkingId === directId.trim() ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            "Vincular"
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
                             <p className="text-[11px] text-slate-500">
                                 Permite vincular diretamente qualquer grupo presente no endpoint <code>/grupos-pesquisa/{'{id}'}</code>.
