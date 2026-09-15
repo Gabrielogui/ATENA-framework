@@ -22,7 +22,7 @@ import { getGrupoPesquisaPorId, getProducoesPorGrupo } from "@/service/researchG
 import { prisma } from "@/lib/prisma"
 
 interface PreviewPageProps {
-    searchParams: Promise<{ features?: string; grupoId?: string }>
+    searchParams: Promise<{ features?: string; grupoId?: string; order?: string }>
 }
 
 export default async function PreviewPage({ searchParams }: PreviewPageProps) {
@@ -36,6 +36,15 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean)
+
+    // Ordem personalizada das seções no layout principal
+    const customOrder = (resolvedParams.order || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+
+    const defaultOrder = ["search", "membros", "missao", "linhas", "publicacoes"]
+    const sectionOrder = Array.from(new Set([...customOrder, ...defaultOrder]))
 
     // Resolução do ID do grupo: searchParams -> session -> consulta no banco
     const user = session.user as any
@@ -147,83 +156,90 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                     {/* Sidebar (F01, F02, F11, F12, F13, F14) */}
                     {(has("F01") || has("F02") || has("F14")) && <Sidebar grupo={grupo as any} />}
 
-                    {/* Área Central */}
+                    {/* Área Central Reordenável com Base na Configuração SPL */}
                     <main className="flex flex-1 flex-col gap-8 py-4">
-                        {/* Busca Léxica / Semântica (F06, F07, F08) */}
-                        {(has("F06") || has("F07") || has("F08")) && (
-                            <section>
-                                <SearchBar />
-                            </section>
-                        )}
+                        {sectionOrder.map((sectionId) => {
+                            switch (sectionId) {
+                                case "search":
+                                    return (has("F06") || has("F07") || has("F08")) ? (
+                                        <section key="search">
+                                            <SearchBar />
+                                        </section>
+                                    ) : null
 
-                        {/* Membros: Detalhado (F18) vs Card Compacto (F03) */}
-                        {has("F03") && (
-                            <section id="membros" className="space-y-3">
-                                <h2 className="text-xl font-bold text-slate-900">Membros e Pesquisadores</h2>
-                                {membros.length > 0 ? (
-                                    has("F18") ? (
-                                        <div className="flex flex-col gap-4">
-                                            {membros.slice(0, 7).map((p) => (
-                                                <ResearcherCardDetails
-                                                    key={p.id}
-                                                    pesquisador={p}
-                                                    instituicaoNome={instituicaoSedeNome}
-                                                />
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-wrap gap-4">
-                                            {membros.slice(0, 7).map((p) => (
-                                                <ResearcherCard key={p.id} pesquisador={p} />
-                                            ))}
-                                        </div>
-                                    )
-                                ) : (
-                                    <p className="text-sm italic text-gray-500">Nenhum membro cadastrado.</p>
-                                )}
-                            </section>
-                        )}
+                                case "membros":
+                                    return has("F03") ? (
+                                        <section key="membros" id="membros" className="space-y-3">
+                                            <h2 className="text-xl font-bold text-slate-900">Membros e Pesquisadores</h2>
+                                            {membros.length > 0 ? (
+                                                has("F18") ? (
+                                                    <div className="flex flex-col gap-4">
+                                                        {membros.slice(0, 7).map((p) => (
+                                                            <ResearcherCardDetails
+                                                                key={p.id}
+                                                                pesquisador={p}
+                                                                instituicaoNome={instituicaoSedeNome}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-wrap gap-4">
+                                                        {membros.slice(0, 7).map((p) => (
+                                                            <ResearcherCard key={p.id} pesquisador={p} />
+                                                        ))}
+                                                    </div>
+                                                )
+                                            ) : (
+                                                <p className="text-sm italic text-gray-500">Nenhum membro cadastrado.</p>
+                                            )}
+                                        </section>
+                                    ) : null
 
-                        {/* Missão / Repercussão (F09) */}
-                        {has("F09") && (
-                            <section id="missao">
-                                <Mission repercussao={grupo.repercussao} />
-                            </section>
-                        )}
+                                case "missao":
+                                    return has("F09") ? (
+                                        <section key="missao" id="missao">
+                                            <Mission repercussao={grupo.repercussao} />
+                                        </section>
+                                    ) : null
 
-                        {/* Linhas de Pesquisa (F05) */}
-                        {has("F05") && (
-                            <section id="linhas" className="space-y-3">
-                                <h2 className="text-xl font-bold text-slate-900">Linhas de Pesquisa</h2>
-                                {linhas.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {linhas.map((linha) => (
-                                            <ResearchLine key={linha.id} linhaPesquisa={linha} />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-sm italic text-gray-500">Nenhuma linha de pesquisa registrada.</p>
-                                )}
-                            </section>
-                        )}
+                                case "linhas":
+                                    return has("F05") ? (
+                                        <section key="linhas" id="linhas" className="space-y-3">
+                                            <h2 className="text-xl font-bold text-slate-900">Linhas de Pesquisa</h2>
+                                            {linhas.length > 0 ? (
+                                                <div className="space-y-3">
+                                                    {linhas.map((linha) => (
+                                                        <ResearchLine key={linha.id} linhaPesquisa={linha} />
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm italic text-gray-500">Nenhuma linha de pesquisa registrada.</p>
+                                            )}
+                                        </section>
+                                    ) : null
 
-                        {/* Publicações Científicas (F04) */}
-                        {has("F04") && (
-                            <section id="publicacoes" className="space-y-3">
-                                <h2 className="text-xl font-bold text-slate-900">Produções Científicas</h2>
-                                {publicacoes.length > 0 ? (
-                                    <div className="space-y-3">
-                                        {publicacoes.map((pub) => (
-                                            <PublicationCard key={pub.id} producao={pub} />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="rounded-2xl border border-gray-100 bg-white p-6 text-sm italic text-gray-500 shadow-xs">
-                                        Nenhuma produção científica indexada para este grupo na API.
-                                    </div>
-                                )}
-                            </section>
-                        )}
+                                case "publicacoes":
+                                    return has("F04") ? (
+                                        <section key="publicacoes" id="publicacoes" className="space-y-3">
+                                            <h2 className="text-xl font-bold text-slate-900">Produções Científicas</h2>
+                                            {publicacoes.length > 0 ? (
+                                                <div className="space-y-3">
+                                                    {publicacoes.map((pub) => (
+                                                        <PublicationCard key={pub.id} producao={pub} />
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="rounded-2xl border border-gray-100 bg-white p-6 text-sm italic text-gray-500 shadow-xs">
+                                                    Nenhuma produção científica indexada para este grupo na API.
+                                                </div>
+                                            )}
+                                        </section>
+                                    ) : null
+
+                                default:
+                                    return null
+                            }
+                        })}
 
                         {/* Placeholders das Features Selecionadas sem Componente Pronto */}
                         {pendingFeatures.length > 0 && (

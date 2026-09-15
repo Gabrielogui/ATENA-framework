@@ -10,6 +10,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { CheckCircle2, AlertTriangle, Sparkles, Layers, RefreshCw } from "lucide-react"
 import { Feature } from "@/core/feature"
 import { FeatureCard } from "./FeatureCard"
+import { ComponentOrderConfigurator, AVAILABLE_SECTIONS } from "./ComponentOrderConfigurator"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Sliders, MoveVertical } from "lucide-react"
 
 interface FeatureConfiguratorProps {
     grupoId: string
@@ -27,6 +30,12 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
             .filter((f) => f.tipo === "obrigatorio" || f.prioridade === "must")
             .map((f) => f.id)
     )
+
+    // Ordem vertical padrão dos componentes na página
+    const [componentOrder, setComponentOrder] = useState<string[]>(() =>
+        AVAILABLE_SECTIONS.map((s) => s.id)
+    )
+
     const [gerando, setGerando] = useState(false)
 
     // Mapeia os objetos completos das features selecionadas
@@ -59,8 +68,11 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
         await new Promise((resolve) => setTimeout(resolve, 600))
 
         const featuresParam = selectedIds.join(",")
+        const orderParam = componentOrder.join(",")
         const targetId = apiGrupoId || grupoId
-        router.push(`/admin/preview?grupoId=${encodeURIComponent(targetId)}&features=${featuresParam}`)
+        router.push(
+            `/admin/preview?grupoId=${encodeURIComponent(targetId)}&features=${featuresParam}&order=${orderParam}`
+        )
     }
 
     return (
@@ -75,7 +87,7 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
                                 Derivação de Produto (SPL - ATENA)
                             </CardTitle>
                             <CardDescription className="text-slate-400">
-                                Selecione os módulos e comportamentos do portal para o grupo:{" "}
+                                Configure as funcionalidades e o layout do portal para o grupo:{" "}
                                 <span className="font-semibold text-cyan-400">{grupoNome}</span>
                             </CardDescription>
                         </div>
@@ -97,32 +109,62 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
                 </CardHeader>
             </Card>
 
-            {/* Alertas de Validação */}
-            {!validacao.valido && (
-                <Alert variant="destructive" className="border-rose-500/40">
-                    <AlertTriangle className="h-4 w-4 text-rose-400" />
-                    <AlertTitle className="font-semibold">Regras de Variabilidade Violadas</AlertTitle>
-                    <AlertDescription className="mt-2 text-sm">
-                        <ul className="list-disc space-y-1 pl-5">
-                            {validacao.erros.map((erro, idx) => (
-                                <li key={idx}>{erro}</li>
-                            ))}
-                        </ul>
-                    </AlertDescription>
-                </Alert>
-            )}
+            {/* Abas: 1. Features SPL | 2. Posição dos Componentes */}
+            <Tabs defaultValue="features" className="w-full space-y-6">
+                <TabsList className="grid w-full grid-cols-2 bg-slate-900 border border-slate-800 p-1">
+                    <TabsTrigger
+                        value="features"
+                        className="text-xs sm:text-sm data-[state=active]:bg-slate-800 data-[state=active]:text-cyan-400"
+                    >
+                        <Sliders className="mr-2 h-4 w-4" /> 1. Funcionalidades ({selectedIds.length} Ativas)
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="layout"
+                        className="text-xs sm:text-sm data-[state=active]:bg-slate-800 data-[state=active]:text-cyan-400"
+                    >
+                        <MoveVertical className="mr-2 h-4 w-4" /> 2. Posição e Ordem dos Componentes
+                    </TabsTrigger>
+                </TabsList>
 
-            {/* Grid de Features */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {featureModel.map((feature) => (
-                    <FeatureCard
-                        key={feature.id}
-                        feature={feature}
-                        isSelected={selectedIds.includes(feature.id)}
-                        onToggle={toggleFeature}
+                {/* ABA 1: SELEÇÃO DE FEATURES */}
+                <TabsContent value="features" className="space-y-6">
+                    {/* Alertas de Validação */}
+                    {!validacao.valido && (
+                        <Alert variant="destructive" className="border-rose-500/40">
+                            <AlertTriangle className="h-4 w-4 text-rose-400" />
+                            <AlertTitle className="font-semibold">Regras de Variabilidade Violadas</AlertTitle>
+                            <AlertDescription className="mt-2 text-sm">
+                                <ul className="list-disc space-y-1 pl-5">
+                                    {validacao.erros.map((erro, idx) => (
+                                        <li key={idx}>{erro}</li>
+                                    ))}
+                                </ul>
+                            </AlertDescription>
+                        </Alert>
+                    )}
+
+                    {/* Grid de Features */}
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {featureModel.map((feature) => (
+                            <FeatureCard
+                                key={feature.id}
+                                feature={feature}
+                                isSelected={selectedIds.includes(feature.id)}
+                                onToggle={toggleFeature}
+                            />
+                        ))}
+                    </div>
+                </TabsContent>
+
+                {/* ABA 2: POSIÇÃO E ORDEM DOS COMPONENTES */}
+                <TabsContent value="layout" className="space-y-6">
+                    <ComponentOrderConfigurator
+                        order={componentOrder}
+                        onOrderChange={setComponentOrder}
+                        selectedFeatureIds={selectedIds}
                     />
-                ))}
-            </div>
+                </TabsContent>
+            </Tabs>
 
             {/* Rodapé de Ação com Botão Gerador */}
             <div className="sticky bottom-6 flex justify-end">
