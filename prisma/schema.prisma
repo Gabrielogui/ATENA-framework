@@ -13,6 +13,8 @@ datasource db {
 
 model GrupoPesquisa {
   id            String        @id @default(uuid())
+  apiGrupoId    String?       @unique
+  dgpId         String?
   nome          String
   anoFormacao   Int?
   situacao      String?

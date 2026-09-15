@@ -22,7 +22,13 @@ const nextConfig: NextConfig = {
               hostname: "oda.vertb.com.br",
               port: "",
               pathname: "/**",
-          }
+          },
+          {
+              protocol: "https",
+              hostname: "oda.vertb.com.brnull",
+              port: "",
+              pathname: "/**",
+          },
       ]
   }
 };

@@ -18,16 +18,18 @@ export const authConfig = {
         return true
         },
         async jwt({ token, user }) {
-        if (user) {
-            token.grupoId = (user as any).grupoId
-        }
-        return token
+            if (user) {
+                token.grupoId = (user as any).grupoId
+                token.apiGrupoId = (user as any).apiGrupoId
+            }
+            return token
         },
         async session({ session, token }) {
-        if (session.user) {
-            (session.user as any).grupoId = token.grupoId
-        }
-        return session
+            if (session.user) {
+                (session.user as any).grupoId = token.grupoId as string | undefined;
+                (session.user as any).apiGrupoId = token.apiGrupoId as string | undefined;
+            }
+            return session
         },
     },
     providers: [], // Fica vazio aqui; os providers com Node.js entram no auth.ts

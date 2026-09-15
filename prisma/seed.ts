@@ -12,9 +12,11 @@ async function main() {
     // 1. Cria um Grupo de Pesquisa inicial (DSML)
     const grupo = await prisma.grupoPesquisa.create({
         data: {
-        nome: "G2BC - Grupo de Pesquisa em Bioinformática",
+        apiGrupoId: "5c0de827-daac-409a-96ad-e81417ac467b",
+        dgpId: "7514305872718105",
+        nome: "G2BC - Grupo de Pesquisa em Bioinformática e Biologia Computacional",
         missao: "Desenvolvimento de soluções computacionais aplicadas à biologia.",
-        anoFormacao: 2020,
+        anoFormacao: 2022,
         }
     })
 

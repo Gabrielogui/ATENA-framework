@@ -2,8 +2,10 @@ import { auth, signOut } from "@/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
-import { LogOut, User as UserIcon, Building2 } from "lucide-react"
+import { LogOut, User as UserIcon, Building2, CheckCircle2, AlertTriangle, Link2 } from "lucide-react"
 import { FeatureConfigurator } from "@/components/admin/FeatureConfigurator"
+import { GroupLinker } from "@/components/admin/GroupLinker"
+import { Badge } from "@/components/ui/badge"
 
 export default async function AdminDashboard() {
     const session = await auth()
@@ -12,21 +14,26 @@ export default async function AdminDashboard() {
         redirect("/login")
     }
 
-    const grupoId = (session.user as any).grupoId || "5c0de827-daac-409a-96ad-e81417ac467b"
+    const userGrupoId = (session.user as any).grupoId
 
-    const grupo = grupoId
+    let grupo = userGrupoId
         ? await prisma.grupoPesquisa.findUnique({
-              where: { id: grupoId },
+              where: { id: userGrupoId },
           })
         : null
 
+    // Se a conta não tiver grupoId específico, busca o primeiro grupo existente no banco (dev fallback)
+    if (!grupo) {
+        grupo = await prisma.grupoPesquisa.findFirst()
+    }
+
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="min-h-screen ">
             {/* Barra Superior */}
-            <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/60 backdrop-blur-md">
+            <header className="sticky top-0 z-40 border-b border-slate-800 backdrop-blur-md">
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
                     <div className="flex items-center space-x-3">
-                        <span className="text-xl font-extrabold tracking-tight text-white">
+                        <span className="text-xl font-extrabold tracking-tight ">
                             ATENA <span className="font-mono text-sm text-cyan-400">v1.0</span>
                         </span>
                     </div>
@@ -53,15 +60,31 @@ export default async function AdminDashboard() {
             </header>
 
             {/* Conteúdo Principal */}
-            <main className="mx-auto max-w-7xl px-6 py-8">
+            <main className="mx-auto max-w-7xl px-6 py-8 space-y-8">
                 {grupo ? (
-                    <FeatureConfigurator grupoId={grupo.id} grupoNome={grupo.nome} />
+                    <>
+                        {/* Seção de Vinculação com a API Acadêmica */}
+                        <GroupLinker
+                            grupoLocalId={grupo.id}
+                            currentApiGrupoId={grupo.apiGrupoId}
+                            currentDgpId={grupo.dgpId}
+                            currentNome={grupo.nome}
+                        />
+
+                        {/* Configurador de Features do SPL */}
+                        <FeatureConfigurator
+                            grupoId={grupo.id}
+                            grupoNome={grupo.nome}
+                            apiGrupoId={grupo.apiGrupoId}
+                            dgpId={grupo.dgpId}
+                        />
+                    </>
                 ) : (
                     <div className="rounded-xl border border-slate-800 bg-slate-900 p-8 text-center">
                         <Building2 className="mx-auto mb-3 h-10 w-10 text-amber-500" />
-                        <h2 className="text-lg font-bold text-slate-100">Nenhum Grupo Vinculado</h2>
+                        <h2 className="text-lg font-bold text-slate-100">Nenhum Grupo Cadastrado</h2>
                         <p className="mt-1 text-sm text-slate-400">
-                            Sua conta autenticada não possui um grupo de pesquisa associado na base de dados.
+                            Não foi encontrado nenhum grupo de pesquisa no banco de dados. Execute o seed ou vincule um grupo.
                         </p>
                     </div>
                 )}

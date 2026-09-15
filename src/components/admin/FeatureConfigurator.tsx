@@ -14,9 +14,11 @@ import { FeatureCard } from "./FeatureCard"
 interface FeatureConfiguratorProps {
     grupoId: string
     grupoNome: string
+    apiGrupoId?: string | null
+    dgpId?: string | null
 }
 
-export function FeatureConfigurator({ grupoId, grupoNome }: FeatureConfiguratorProps) {
+export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: FeatureConfiguratorProps) {
     const router = useRouter()
 
     // Inicializa já com as features obrigatórias marcadas por padrão
@@ -57,7 +59,8 @@ export function FeatureConfigurator({ grupoId, grupoNome }: FeatureConfiguratorP
         await new Promise((resolve) => setTimeout(resolve, 600))
 
         const featuresParam = selectedIds.join(",")
-        router.push(`/admin/preview?grupoId=${grupoId}&features=${featuresParam}`)
+        const targetId = apiGrupoId || grupoId
+        router.push(`/admin/preview?grupoId=${encodeURIComponent(targetId)}&features=${featuresParam}`)
     }
 
     return (

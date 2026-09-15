@@ -7,11 +7,6 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, MonitorPlay, Layers, Sparkles, AlertCircle } from "lucide-react"
 
 // Componentes Prontos
-
-// Camada de Serviço
-import { ProducaoDetalhe } from "@/core/producao"
-import { Pesquisador } from "@/core/researcher"
-import { getGrupoPesquisaPorId, getProducoesPorGrupo } from "@/service/researchGroupService"
 import Sidebar from "@/components/SideBar"
 import SearchBar from "@/components/SearchBar"
 import Mission from "@/components/researchGroup/Mission"
@@ -19,6 +14,12 @@ import ResearchLine from "@/components/researchGroup/ResearchLine"
 import ResearcherCardDetails from "@/components/researcher/ResearcherCardDatails"
 import ResearcherCard from "@/components/researcher/ResearcherCard"
 import PublicationCard from "@/components/publication/PublicationCard"
+
+// Camada de Serviço
+import { ProducaoDetalhe } from "@/core/producao"
+import { Pesquisador } from "@/core/researcher"
+import { getGrupoPesquisaPorId, getProducoesPorGrupo } from "@/service/researchGroupService"
+import { prisma } from "@/lib/prisma"
 
 interface PreviewPageProps {
     searchParams: Promise<{ features?: string; grupoId?: string }>
@@ -36,8 +37,29 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         .map((s) => s.trim())
         .filter(Boolean)
 
-    // ID do grupo vindo da URL ou da Sessão
-    const grupoId = "5c0de827-daac-409a-96ad-e81417ac467b"
+    // Resolução do ID do grupo: searchParams -> session -> consulta no banco
+    const user = session.user as any
+    const rawGrupoId = resolvedParams.grupoId || user?.apiGrupoId || user?.grupoId
+
+    let grupoId = rawGrupoId
+    if (rawGrupoId) {
+        const grupoLocal = await prisma.grupoPesquisa.findFirst({
+            where: {
+                OR: [
+                    { id: rawGrupoId },
+                    { apiGrupoId: rawGrupoId },
+                ],
+            },
+        })
+        if (grupoLocal?.apiGrupoId) {
+            grupoId = grupoLocal.apiGrupoId
+        }
+    }
+
+    // Fallback padrão se nada for encontrado
+    if (!grupoId) {
+        grupoId = "5c0de827-daac-409a-96ad-e81417ac467b"
+    }
 
     // Chamadas reais para a API do Backend
     let grupo = null
@@ -58,19 +80,21 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
 
     const has = (id: string) => selectedIds.includes(id)
 
-    // Lista de membros formatada a partir do retorno da API
-    const membros: Pesquisador[] = grupo?.membros?.map((m) => m.pesquisador) || []
-    const linhas = grupo?.linhasPesquisa || []
-    const instituicaoSedeNome = grupo?.instituicoes?.find((i) => i.tipoRelacao === "SEDE")?.instituicao?.nome
+    // Extração segura garantindo que apenas objetos válidos com ID fiquem no array
+    const membros: Pesquisador[] = (grupo?.membros || [])
+        .map((m: any) => m?.pesquisador ?? m)
+        .filter((p: any): p is Pesquisador => Boolean(p && p.id))
 
-    // Features que já possuem componentes visuais dedicados
+    const linhas = (grupo?.linhasPesquisa || []).filter(Boolean)
+    const instituicaoSedeNome = grupo?.instituicoes?.find((i: any) => i.tipoRelacao === "SEDE")?.instituicao?.nome
+
+    // Features com componentes visuais prontos
     const implementedFeatureIds = [
         "F01", "F02", "F03", "F04", "F05",
         "F06", "F07", "F08", "F09", "F11",
         "F12", "F13", "F14", "F18", "F19"
     ]
 
-    // Features selecionadas que ainda não possuem componente
     const pendingFeatures = selectedIds
         .filter((id) => !implementedFeatureIds.includes(id))
         .map((id) => featureModel.find((f) => f.id === id))
@@ -79,7 +103,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
     return (
         <div className="min-h-screen bg-slate-100 text-slate-900">
             {/* Barra de Controle de Simulação */}
-            <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 px-6 py-3 shadow-xs backdrop-blur-md">
+            <header className="top-0 z-50 border-b border-slate-200 bg-white/95 px-6 py-3 shadow-xs backdrop-blur-md">
                 <div className="mx-auto flex max-w-7xl items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/admin">
@@ -119,7 +143,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                 </div>
             ) : (
                 /* Estrutura do Portal Derivado */
-                <div className="mx-auto flex max-w-7xl items-start gap-6 p-4">
+                <div className="mx-auto flex items-start gap-6 p-4">
                     {/* Sidebar (F01, F02, F11, F12, F13, F14) */}
                     {(has("F01") || has("F02") || has("F14")) && <Sidebar grupo={grupo as any} />}
 
@@ -129,6 +153,34 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                         {(has("F06") || has("F07") || has("F08")) && (
                             <section>
                                 <SearchBar />
+                            </section>
+                        )}
+
+                        {/* Membros: Detalhado (F18) vs Card Compacto (F03) */}
+                        {has("F03") && (
+                            <section id="membros" className="space-y-3">
+                                <h2 className="text-xl font-bold text-slate-900">Membros e Pesquisadores</h2>
+                                {membros.length > 0 ? (
+                                    has("F18") ? (
+                                        <div className="flex flex-col gap-4">
+                                            {membros.slice(0, 7).map((p) => (
+                                                <ResearcherCardDetails
+                                                    key={p.id}
+                                                    pesquisador={p}
+                                                    instituicaoNome={instituicaoSedeNome}
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-4">
+                                            {membros.slice(0, 7).map((p) => (
+                                                <ResearcherCard key={p.id} pesquisador={p} />
+                                            ))}
+                                        </div>
+                                    )
+                                ) : (
+                                    <p className="text-sm italic text-gray-500">Nenhum membro cadastrado.</p>
+                                )}
                             </section>
                         )}
 
@@ -151,34 +203,6 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                     </div>
                                 ) : (
                                     <p className="text-sm italic text-gray-500">Nenhuma linha de pesquisa registrada.</p>
-                                )}
-                            </section>
-                        )}
-
-                        {/* Membros: Detalhado (F18) vs Card Compacto (F03) */}
-                        {has("F03") && (
-                            <section id="membros" className="space-y-3">
-                                <h2 className="text-xl font-bold text-slate-900">Membros e Pesquisadores</h2>
-                                {membros.length > 0 ? (
-                                    has("F18") ? (
-                                        <div className="flex flex-col gap-4">
-                                            {membros.map((p) => (
-                                                <ResearcherCardDetails
-                                                    key={p.id}
-                                                    pesquisador={p}
-                                                    instituicaoNome={instituicaoSedeNome}
-                                                />
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-wrap gap-4">
-                                            {membros.map((p) => (
-                                                <ResearcherCard key={p.id} pesquisador={p} />
-                                            ))}
-                                        </div>
-                                    )
-                                ) : (
-                                    <p className="text-sm italic text-gray-500">Nenhum membro cadastrado.</p>
                                 )}
                             </section>
                         )}
