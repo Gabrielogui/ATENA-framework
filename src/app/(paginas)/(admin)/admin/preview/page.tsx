@@ -8,7 +8,7 @@ import { ArrowLeft, MonitorPlay, Layers, Sparkles, AlertCircle } from "lucide-re
 
 // Componentes Prontos
 import Sidebar from "@/components/SideBar"
-import SearchBar from "@/components/SearchBar"
+import SearchSection from "@/components/search/SearchSection"
 import Mission from "@/components/researchGroup/Mission"
 import ResearchLine from "@/components/researchGroup/ResearchLine"
 import ResearcherCardDetails from "@/components/researcher/ResearcherCardDatails"
@@ -188,8 +188,13 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                             switch (sectionId) {
                                 case "search":
                                     return (has("F06") || has("F07") || has("F08")) ? (
-                                        <section key="search">
-                                            <SearchBar />
+                                        <section key="search" id="search">
+                                            <SearchSection
+                                                grupoId={grupoId}
+                                                hasLexica={has("F06")}
+                                                hasSemantica={has("F07")}
+                                                hasResultado={has("F08")}
+                                            />
                                         </section>
                                     ) : null
 
