@@ -24,10 +24,10 @@ interface FeatureConfiguratorProps {
 export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: FeatureConfiguratorProps) {
     const router = useRouter()
 
-    // Inicializa já com as features obrigatórias marcadas por padrão
+    // Inicializa já com as features obrigatórias raiz marcadas por padrão (exceto as que requerem outra feature)
     const [selectedIds, setSelectedIds] = useState<string[]>(() =>
         featureModel
-            .filter((f) => f.tipo === "obrigatorio" || f.prioridade === "must")
+            .filter((f) => (f.tipo === "obrigatorio" || f.prioridade === "must") && (!f.requer || f.requer.length === 0))
             .map((f) => f.id)
     )
 
@@ -49,14 +49,33 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
     }, [selectedFeatures])
 
     const toggleFeature = (feature: Feature) => {
-        const isObligatory = feature.tipo === "obrigatorio" || feature.prioridade === "must"
-        if (isObligatory) return // Não desmarca obrigatórias
+        const isRootObligatory =
+            (feature.tipo === "obrigatorio" || feature.prioridade === "must") &&
+            (!feature.requer || feature.requer.length === 0)
 
-        setSelectedIds((prev) =>
-            prev.includes(feature.id)
-                ? prev.filter((id) => id !== feature.id)
-                : [...prev, feature.id]
-        )
+        if (isRootObligatory) return // Não desmarca obrigatórias raiz
+
+        setSelectedIds((prev) => {
+            const isCurrentlySelected = prev.includes(feature.id)
+            if (isCurrentlySelected) {
+                const next = prev.filter((id) => id !== feature.id)
+                // Se desmarcou uma busca e não sobrou nenhuma outra busca selecionada, desmarca F08 (Resultado de Busca)
+                if (feature.id === "F06" || feature.id === "F07") {
+                    const hasRemainingSearch = next.includes("F06") || next.includes("F07")
+                    if (!hasRemainingSearch) {
+                        return next.filter((id) => id !== "F08")
+                    }
+                }
+                return next
+            } else {
+                const next = [...prev, feature.id]
+                // Se marcou uma busca (F06 ou F07), marca automaticamente F08 (Resultado de Busca)
+                if ((feature.id === "F06" || feature.id === "F07") && !next.includes("F08")) {
+                    return [...next, "F08"]
+                }
+                return next
+            }
+        })
     }
 
     const handleGerarPortal = async () => {

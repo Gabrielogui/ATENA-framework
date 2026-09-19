@@ -162,38 +162,59 @@ export function validarSelecao(features: Feature[]) : ValidacaoResultado {
     const erros : string[] = []
     const selectedIds = new Set(features.map((f) => f.id));
 
-    // CONFERIR SE TODAS AS OBRIGATÓRIAS FORAM SELECIONADAS
+    // 1. CONFERIR SE TODAS AS OBRIGATÓRIAS FORAM SELECIONADAS
     const obrigatorias = featureModel.filter(
         (f) => f.tipo === "obrigatorio" || f.prioridade === "must"
     );
 
     for (const f of obrigatorias) {
+        // Se a funcionalidade obrigatória depende de outras features (ex: F08 requer F06 ou F07):
+        // Ela só é obrigatória se pelo menos um dos seus requisitos estiver selecionado!
+        if (f.requer && f.requer.length > 0) {
+            const algumRequerSelecionado = f.requer.some((r) => selectedIds.has(r));
+            if (algumRequerSelecionado && !selectedIds.has(f.id)) {
+                const requerObjs = f.requer.map((id) => featureModel.find((fm) => fm.id === id)).filter(Boolean);
+                erros.push(`A funcionalidade "${f.name}" (${f.id}) é obrigatória quando pelo menos uma das opções (${requerObjs.map((r) => `"${r?.name}"`).join(" ou ")}) estiver selecionada.`);
+            }
+            // Se nenhum dos requisitos estiver selecionado, esta feature não é obrigatória.
+            continue;
+        }
+
+        // Obrigatórias raiz (incondicionais)
         if (!selectedIds.has(f.id)) {
             erros.push(`A funcionalidade obrigatória "${f.name}" (${f.id}) deve estar selecionada.`);
         }
     }
     
-    // CONFERIR SE ALGUMA QUE REQUER FOI SELECIONADA SEM A FEATURE PAI
+    // 2. CONFERIR SE ALGUMA FEATURE SELECIONADA QUE REQUER OUTRA ESTÁ SEM O REQUISITO
     for (const feature of features) {
         if (feature.requer && feature.requer.length > 0) {
-            if (feature.tipo == "ou"){
-                const temPeloMenosUmRequer = feature.requer.some(requer => selectedIds.has(requer))
+            const requerObjs = feature.requer.map((id) => featureModel.find((fm) => fm.id === id)).filter(Boolean);
+            
+            // Se a feature for do tipo "ou" OU se as features requeridas pertencerem a um grupo "ou":
+            // basta que pelo menos UMA das requeridas esteja selecionada (ou ambas).
+            const isOrRelationship = feature.tipo === "ou" || requerObjs.some((rf) => rf?.tipo === "ou");
+
+            if (isOrRelationship) {
+                const temPeloMenosUmRequer = feature.requer.some((requer) => selectedIds.has(requer));
                 if (!temPeloMenosUmRequer) {
-                    erros.push(`A funcionalidade "${feature.name}" (${feature.id}) requer pelo menos uma das funcionalidades "${feature.requer}".`);
+                    erros.push(`A funcionalidade "${feature.name}" (${feature.id}) requer pelo menos uma das funcionalidades: ${requerObjs.map((r) => `"${r?.name}" (${r?.id})`).join(" ou ")}.`);
                 }
-            }else{
+            } else {
                 for (const requer of feature.requer) {
                     if (!selectedIds.has(requer)) {
-                        erros.push(`A funcionalidade "${feature.name}" (${feature.id}) requer a funcionalidade "${requer}".`);
+                        const reqObj = featureModel.find((fm) => fm.id === requer);
+                        erros.push(`A funcionalidade "${feature.name}" (${feature.id}) requer a funcionalidade "${reqObj?.name ?? requer}" (${requer}).`);
                     }
                 }
             }
         }
 
-        if(feature.exclui && feature.exclui.length > 0){
+        if (feature.exclui && feature.exclui.length > 0) {
             for (const exclui of feature.exclui) {
                 if (selectedIds.has(exclui)) {
-                    erros.push(`A funcionalidade "${feature.name}" (${feature.id}) exclui a funcionalidade "${exclui}".`);
+                    const excluiObj = featureModel.find((fm) => fm.id === exclui);
+                    erros.push(`A funcionalidade "${feature.name}" (${feature.id}) exclui a funcionalidade "${excluiObj?.name ?? exclui}" (${exclui}).`);
                 }
             }
         }

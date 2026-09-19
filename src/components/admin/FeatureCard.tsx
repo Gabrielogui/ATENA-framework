@@ -12,7 +12,9 @@ interface FeatureCardProps {
 }
 
 export function FeatureCard({ feature, isSelected, onToggle }: FeatureCardProps) {
-    const isObligatory = feature.tipo === "obrigatorio" || feature.prioridade === "must"
+    const isObligatory =
+        (feature.tipo === "obrigatorio" || feature.prioridade === "must") &&
+        (!feature.requer || feature.requer.length === 0)
 
     const getBadgeVariant = (tipo: string) => {
         switch (tipo) {
