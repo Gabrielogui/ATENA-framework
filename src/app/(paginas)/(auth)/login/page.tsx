@@ -53,20 +53,23 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center px-4">
-            <Card className="w-full max-w-md border-slate-800 bg-slate-900/90 text-slate-100 shadow-2xl backdrop-blur-sm">
+        <div className="relative min-h-screen flex items-center justify-center px-4 bg-background text-foreground">
+            <Card className="w-full max-w-md border-border bg-card text-card-foreground shadow-lg">
                 <CardHeader className="space-y-2 text-center">
-                    <CardTitle className="text-2xl font-bold tracking-tight text-white">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary mb-1">
+                        <Sparkles className="h-6 w-6" />
+                    </div>
+                    <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
                         ATENA Framework
                     </CardTitle>
-                    <CardDescription className="text-slate-400">
+                    <CardDescription className="text-muted-foreground">
                         Acesse o painel para gerenciar o portal do seu grupo
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent>
                     {error && (
-                        <Alert variant="destructive" className="mb-5 border-red-500/50 bg-red-950/40 text-red-300">
+                        <Alert variant="destructive" className="mb-5 border-destructive/30 bg-destructive/10 text-destructive">
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription>{error}</AlertDescription>
                         </Alert>
@@ -74,7 +77,7 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-slate-200">
+                            <Label htmlFor="email" className="text-foreground">
                                 E-mail institucional
                             </Label>
                             <Input
@@ -84,12 +87,12 @@ export default function LoginPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="border-slate-800 bg-slate-950/60 text-white placeholder:text-slate-500 focus-visible:ring-cyan-500"
+                                className="border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="text-slate-200">
+                            <Label htmlFor="password" className="text-foreground">
                                 Senha de acesso
                             </Label>
                             <Input
@@ -99,14 +102,14 @@ export default function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                className="border-slate-800 bg-slate-950/60 text-white placeholder:text-slate-500 focus-visible:ring-cyan-500"
+                                className="border-border bg-card text-foreground placeholder:text-muted-foreground focus-visible:ring-primary"
                             />
                         </div>
 
                         <Button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-cyan-600 font-medium text-white hover:bg-cyan-500 focus-visible:ring-cyan-500"
+                            className="w-full bg-primary font-medium text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary shadow-xs"
                         >
                         {loading ? (
                             <>

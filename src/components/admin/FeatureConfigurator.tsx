@@ -78,29 +78,29 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
     return (
         <div className="space-y-6">
             {/* Top Header Card */}
-            <Card className="border-slate-800 backdrop-blur-md">
+            <Card className="border-border bg-card shadow-xs backdrop-blur-md">
                 <CardHeader>
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
-                            <CardTitle className="flex items-center gap-2 text-xl font-bold">
-                                <Layers className="h-5 w-5 text-cyan-400" />
+                            <CardTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
+                                <Layers className="h-5 w-5 text-primary" />
                                 Derivação de Produto (SPL - ATENA)
                             </CardTitle>
-                            <CardDescription className="text-slate-400">
+                            <CardDescription className="text-muted-foreground">
                                 Configure as funcionalidades e o layout do portal para o grupo:{" "}
-                                <span className="font-semibold text-cyan-400">{grupoNome}</span>
+                                <span className="font-semibold text-primary">{grupoNome}</span>
                             </CardDescription>
                         </div>
                         <div className="flex items-center gap-3">
-                            <Badge variant="outline" className="border-slate-700 bg-slate-950 px-3 py-1 text-slate-300">
+                            <Badge variant="outline" className="border-border bg-muted/60 px-3 py-1 text-muted-foreground">
                                 {selectedIds.length} / {featureModel.length} Features Ativas
                             </Badge>
                             {validacao.valido ? (
-                                <Badge className="flex items-center gap-1 border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+                                <Badge className="flex items-center gap-1 border border-emerald-500/30 bg-emerald-500/10 text-emerald-600">
                                     <CheckCircle2 className="h-3.5 w-3.5" /> Modelo Consistente
                                 </Badge>
                             ) : (
-                                <Badge className="flex items-center gap-1 border border-rose-500/30 bg-rose-500/10 text-rose-400">
+                                <Badge className="flex items-center gap-1 border border-rose-500/30 bg-rose-500/10 text-rose-600">
                                     <AlertTriangle className="h-3.5 w-3.5" /> Conflito Detectado
                                 </Badge>
                             )}
@@ -111,16 +111,16 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
 
             {/* Abas: 1. Features SPL | 2. Posição dos Componentes */}
             <Tabs defaultValue="features" className="w-full space-y-6">
-                <TabsList className="grid w-full grid-cols-2 bg-slate-900 border border-slate-800 p-1">
+                <TabsList className="grid w-full grid-cols-2 bg-muted/70 border border-border p-1">
                     <TabsTrigger
                         value="features"
-                        className="text-xs sm:text-sm data-[state=active]:bg-slate-800 data-[state=active]:text-cyan-400"
+                        className="text-xs sm:text-sm font-semibold text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-2xs transition-all"
                     >
                         <Sliders className="mr-2 h-4 w-4" /> 1. Funcionalidades ({selectedIds.length} Ativas)
                     </TabsTrigger>
                     <TabsTrigger
                         value="layout"
-                        className="text-xs sm:text-sm data-[state=active]:bg-slate-800 data-[state=active]:text-cyan-400"
+                        className="text-xs sm:text-sm font-semibold text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-2xs transition-all"
                     >
                         <MoveVertical className="mr-2 h-4 w-4" /> 2. Posição e Ordem dos Componentes
                     </TabsTrigger>
@@ -130,8 +130,8 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
                 <TabsContent value="features" className="space-y-6">
                     {/* Alertas de Validação */}
                     {!validacao.valido && (
-                        <Alert variant="destructive" className="border-rose-500/40">
-                            <AlertTriangle className="h-4 w-4 text-rose-400" />
+                        <Alert variant="destructive" className="border-rose-500/40 bg-rose-50 text-rose-700">
+                            <AlertTriangle className="h-4 w-4 text-rose-600" />
                             <AlertTitle className="font-semibold">Regras de Variabilidade Violadas</AlertTitle>
                             <AlertDescription className="mt-2 text-sm">
                                 <ul className="list-disc space-y-1 pl-5">
@@ -168,12 +168,12 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
 
             {/* Rodapé de Ação com Botão Gerador */}
             <div className="sticky bottom-6 flex justify-end">
-                <Card className="border-slate-800 bg-slate-900/95 p-4 shadow-2xl backdrop-blur-md">
+                <Card className="border-border bg-card/95 p-4 shadow-xl backdrop-blur-md">
                     <Button
                         size="lg"
                         disabled={!validacao.valido || gerando}
                         onClick={handleGerarPortal}
-                        className="bg-cyan-600 px-8 font-semibold text-white shadow-lg shadow-cyan-600/20 hover:bg-cyan-500 disabled:opacity-50"
+                        className="bg-primary px-8 font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 disabled:opacity-50 transition-all"
                     >
                         {gerando ? (
                             <>
@@ -182,7 +182,7 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
                             </>
                         ) : (
                             <>
-                                <Sparkles className="mr-2 h-5 w-5 text-cyan-200" />
+                                <Sparkles className="mr-2 h-5 w-5 text-primary-foreground/90" />
                                 Publicar e Visualizar Portal
                             </>
                         )}

@@ -28,20 +28,20 @@ export default async function AdminDashboard() {
     }
 
     return (
-        <div className="min-h-screen ">
+        <div className="min-h-screen bg-background text-foreground">
             {/* Barra Superior */}
-            <header className="sticky top-0 z-40 border-b border-slate-800 backdrop-blur-md">
+            <header className="sticky top-0 z-40 border-b border-border bg-card/95 shadow-2xs backdrop-blur-md">
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
                     <div className="flex items-center space-x-3">
-                        <span className="text-xl font-extrabold tracking-tight ">
-                            ATENA <span className="font-mono text-sm text-cyan-400">v1.0</span>
+                        <span className="text-xl font-extrabold tracking-tight text-foreground">
+                            ATENA <span className="font-mono text-sm text-primary">v1.0</span>
                         </span>
                     </div>
 
                     <div className="flex items-center space-x-4">
-                        <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-400">
-                            <UserIcon className="h-3.5 w-3.5 text-cyan-400" />
-                            <span>{session.user.name ?? session.user.email}</span>
+                        <div className="hidden sm:flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
+                            <UserIcon className="h-3.5 w-3.5 text-primary" />
+                            <span className="font-medium text-foreground">{session.user.name ?? session.user.email}</span>
                         </div>
 
                         <form
@@ -50,7 +50,7 @@ export default async function AdminDashboard() {
                                 await signOut({ redirectTo: "/login" })
                             }}
                         >
-                            <Button variant="ghost" size="sm" type="submit" className="text-slate-400 hover:bg-red-500/10 hover:text-red-400">
+                            <Button variant="ghost" size="sm" type="submit" className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
                                 <LogOut className="mr-1.5 h-4 w-4" />
                                 Sair
                             </Button>
@@ -80,10 +80,10 @@ export default async function AdminDashboard() {
                         />
                     </>
                 ) : (
-                    <div className="rounded-xl border border-slate-800 bg-slate-900 p-8 text-center">
+                    <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-xs">
                         <Building2 className="mx-auto mb-3 h-10 w-10 text-amber-500" />
-                        <h2 className="text-lg font-bold text-slate-100">Nenhum Grupo Cadastrado</h2>
-                        <p className="mt-1 text-sm text-slate-400">
+                        <h2 className="text-lg font-bold text-foreground">Nenhum Grupo Cadastrado</h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
                             Não foi encontrado nenhum grupo de pesquisa no banco de dados. Execute o seed ou vincule um grupo.
                         </p>
                     </div>

@@ -139,28 +139,28 @@ export function ComponentOrderConfigurator({
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+            <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4 shadow-xs">
                 <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-cyan-500/10 p-2 text-cyan-400">
+                    <div className="rounded-lg bg-primary/10 p-2 text-primary">
                         <Layers className="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-white text-sm">
+                        <h3 className="font-semibold text-foreground text-sm">
                             Ordem Vertical das Seções no Portal
                         </h3>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-muted-foreground">
                             Use os botões ▲ / ▼ ou arraste para definir quais seções aparecem primeiro
                         </p>
                     </div>
                 </div>
-                <Badge variant="outline" className="border-slate-700 bg-slate-900 text-slate-300 text-xs">
+                <Badge variant="outline" className="border-border bg-muted/60 text-muted-foreground text-xs">
                     {activeSections.length} Seções Ativas
                 </Badge>
             </div>
 
             {activeSections.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-800 p-8 text-center text-sm text-slate-400">
-                    <Info className="mx-auto mb-2 h-6 w-6 text-slate-500" />
+                <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+                    <Info className="mx-auto mb-2 h-6 w-6 text-muted-foreground/60" />
                     Nenhuma seção configurável ativa. Selecione ao menos uma feature de conteúdo (Membros, Linhas, Missão ou Publicações).
                 </div>
             ) : (
@@ -180,30 +180,30 @@ export function ComponentOrderConfigurator({
                                 onDragEnd={handleDragEnd}
                                 className={`flex items-center justify-between gap-4 rounded-xl border p-4 transition-all duration-200 cursor-grab active:cursor-grabbing ${
                                     isDragging
-                                        ? "border-cyan-500 bg-slate-800/80 scale-[1.01] shadow-lg shadow-cyan-500/10"
-                                        : "border-slate-800 bg-slate-900/90 hover:border-slate-700 hover:bg-slate-900"
+                                        ? "border-primary bg-primary/5 scale-[1.01] shadow-md shadow-primary/10"
+                                        : "border-border bg-card hover:border-primary/40 hover:bg-card/90 shadow-2xs"
                                 }`}
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="text-slate-500 hover:text-slate-300">
+                                    <div className="text-muted-foreground/60 hover:text-foreground">
                                         <GripVertical className="h-5 w-5" />
                                     </div>
 
                                     {/* Posição Numérica */}
-                                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10 font-mono text-xs font-bold text-cyan-400">
+                                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 font-mono text-xs font-bold text-primary">
                                         {index + 1}º
                                     </div>
 
                                     {/* Ícone e Nome */}
-                                    <div className="rounded-lg bg-slate-800 p-2 text-slate-300">
-                                        <Icon className="h-4 w-4 text-cyan-400" />
+                                    <div className="rounded-lg bg-muted p-2 text-primary">
+                                        <Icon className="h-4 w-4" />
                                     </div>
 
                                     <div>
-                                        <h4 className="font-semibold text-white text-sm">
+                                        <h4 className="font-semibold text-foreground text-sm">
                                             {section.title}
                                         </h4>
-                                        <p className="text-xs text-slate-400">
+                                        <p className="text-xs text-muted-foreground">
                                             {section.description}
                                         </p>
                                     </div>
@@ -217,7 +217,7 @@ export function ComponentOrderConfigurator({
                                         size="sm"
                                         disabled={isFirst}
                                         onClick={() => moveItem(index, "up")}
-                                        className="h-8 w-8 p-0 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-30"
+                                        className="h-8 w-8 p-0 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
                                         title="Mover para cima"
                                     >
                                         <ArrowUp className="h-4 w-4" />
@@ -228,7 +228,7 @@ export function ComponentOrderConfigurator({
                                         size="sm"
                                         disabled={isLast}
                                         onClick={() => moveItem(index, "down")}
-                                        className="h-8 w-8 p-0 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-30"
+                                        className="h-8 w-8 p-0 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
                                         title="Mover para baixo"
                                     >
                                         <ArrowDown className="h-4 w-4" />
