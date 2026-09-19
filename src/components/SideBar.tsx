@@ -4,18 +4,29 @@ import Link from "next/link";
 
 interface SidebarProps {
     grupo?: ResearchGroup | null;
+    logoUrl?: string | null;
 }
 
-export default function Sidebar({ grupo }: SidebarProps) {
+export default function Sidebar({ grupo, logoUrl }: SidebarProps) {
     const instituicaoSede = grupo?.instituicoes?.find((i) => i.tipoRelacao === 'SEDE')?.instituicao;
 
     return (
         <aside className="w-72 h-[calc(100vh-2rem)] bg-white border border-gray-100 rounded-3xl p-6 flex flex-col justify-between shadow-sm my-4 ml-4 sticky top-4">
             <div>
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-md shadow-indigo-200">
-                        <Database />
-                    </div>
+                    {logoUrl ? (
+                        <div className="w-12 h-12 rounded-2xl border border-gray-200 bg-white p-1 flex items-center justify-center shadow-xs overflow-hidden">
+                            <img
+                                src={logoUrl}
+                                alt={grupo?.nome ?? "Logo do Grupo"}
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-primary-foreground shadow-md shadow-primary/20">
+                            <Database className="w-6 h-6" />
+                        </div>
+                    )}
                     <div className="overflow-hidden">
                         <h2 className="font-extrabold text-slate-900 text-base leading-snug truncate" title={grupo?.nome}>
                             {grupo?.nome ?? "Laboratório de Pesquisa"}
@@ -66,12 +77,12 @@ export default function Sidebar({ grupo }: SidebarProps) {
             <div className="space-y-5">
                 <hr className="border-gray-100" />
 
-                <div className="bg-indigo-50/50 border border-indigo-50/80 rounded-2xl p-4">
-                    <div className="flex items-center gap-2 text-indigo-700 font-bold text-sm mb-1">
+                <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4">
+                    <div className="flex items-center gap-2 text-primary font-bold text-sm mb-1">
                         <Award className="w-4 h-4" />
                         <h4>DGP / CNPq</h4>
                     </div>
-                    <p className="text-xs text-gray-500 leading-relaxed font-mono">
+                    <p className="text-xs text-muted-foreground leading-relaxed font-mono">
                         Código DGP: {grupo?.dgpId ?? "7514305872718105"}
                     </p>
                 </div>

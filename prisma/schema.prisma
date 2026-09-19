@@ -12,21 +12,55 @@ datasource db {
 }
 
 model GrupoPesquisa {
-  id            String        @id @default(uuid())
-  apiGrupoId    String?       @unique
-  dgpId         String?
-  nome          String
-  anoFormacao   Int?
-  situacao      String?
-  repercussao   String?
-  missao        String?
-  sobre         String?
-  contato       String[]
-  pesquisadores Pesquisador[]
-  users         User[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id             String        @id @default(uuid())
+  apiGrupoId     String?       @unique
+  dgpId          String?
+  nome           String
+  anoFormacao    Int?
+  situacao       String?
+  repercussao    String?
+  missao         String?
+  sobre          String?
+  logoUrl        String?
+  corPrimaria    String?       @default("#2563eb")
+  corSecundaria  String?       @default("#0284c7")
+  redesSociais   Json?
+  customSettings Json?
+  contato        String[]
+  pesquisadores  Pesquisador[]
+  noticias       Noticia[]
+  eventos        Evento[]
+  users          User[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
+
+model Noticia {
+  id              String        @id @default(uuid())
+  titulo          String
+  resumo          String
+  conteudo        String?
+  data            DateTime      @default(now())
+  link            String?
+  grupoPesquisaId String
+  grupoPesquisa   GrupoPesquisa @relation(fields: [grupoPesquisaId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Evento {
+  id              String        @id @default(uuid())
+  titulo          String
+  descricao       String
+  data            DateTime
+  local           String?
+  link            String?
+  grupoPesquisaId String
+  grupoPesquisa   GrupoPesquisa @relation(fields: [grupoPesquisaId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
 
 model Pesquisador {
   id                String        @id @default(uuid())

@@ -154,3 +154,172 @@ export async function vincularGrupoApi({ grupoId, apiGrupoId }: VincularGrupoPar
         }
     }
 }
+
+export interface ConfiguracaoPortalInput {
+    grupoId: string
+    corPrimaria?: string
+    corSecundaria?: string
+    sobre?: string
+    logoUrl?: string
+    redesSociais?: {
+        instagram?: string
+        linkedin?: string
+        github?: string
+        x?: string
+        youtube?: string
+        site?: string
+    }
+    noticias?: Array<{
+        id?: string
+        titulo: string
+        resumo: string
+        conteudo?: string
+        data?: string | Date
+        link?: string
+    }>
+    eventos?: Array<{
+        id?: string
+        titulo: string
+        descricao: string
+        data: string | Date
+        local?: string
+        link?: string
+    }>
+    customSettings?: any
+}
+
+/**
+ * Salva as configurações personalizadas do portal do grupo (Cores, Sobre, Logo, Redes, Notícias e Eventos).
+ */
+export async function salvarConfiguracaoPortalAction(input: ConfiguracaoPortalInput) {
+    try {
+        const session = await auth()
+        if (!session?.user) {
+            return { success: false, error: "Não autorizado. Faça login novamente." }
+        }
+
+        const { grupoId, corPrimaria, corSecundaria, sobre, logoUrl, redesSociais, noticias, eventos, customSettings } = input
+
+        if (!grupoId) {
+            return { success: false, error: "ID do grupo não informado." }
+        }
+
+        await prisma.$transaction(async (tx) => {
+            // Atualiza campos do grupo
+            await tx.grupoPesquisa.update({
+                where: { id: grupoId },
+                data: {
+                    corPrimaria: corPrimaria || "#2563eb",
+                    corSecundaria: corSecundaria || "#0284c7",
+                    sobre: sobre ?? null,
+                    logoUrl: logoUrl || null,
+                    redesSociais: redesSociais ? (redesSociais as any) : undefined,
+                    customSettings: customSettings ? (customSettings as any) : undefined,
+                },
+            })
+
+            // Sincroniza notícias
+            if (Array.isArray(noticias)) {
+                await tx.noticia.deleteMany({ where: { grupoPesquisaId: grupoId } })
+                if (noticias.length > 0) {
+                    await tx.noticia.createMany({
+                        data: noticias.map((n) => ({
+                            titulo: n.titulo.trim(),
+                            resumo: n.resumo.trim(),
+                            conteudo: n.conteudo?.trim() || null,
+                            data: n.data ? new Date(n.data) : new Date(),
+                            link: n.link?.trim() || null,
+                            grupoPesquisaId: grupoId,
+                        })),
+                    })
+                }
+            }
+
+            // Sincroniza eventos
+            if (Array.isArray(eventos)) {
+                await tx.evento.deleteMany({ where: { grupoPesquisaId: grupoId } })
+                if (eventos.length > 0) {
+                    await tx.evento.createMany({
+                        data: eventos.map((e) => ({
+                            titulo: e.titulo.trim(),
+                            descricao: e.descricao.trim(),
+                            data: e.data ? new Date(e.data) : new Date(),
+                            local: e.local?.trim() || null,
+                            link: e.link?.trim() || null,
+                            grupoPesquisaId: grupoId,
+                        })),
+                    })
+                }
+            }
+        })
+
+        revalidatePath("/admin")
+        revalidatePath("/admin/preview")
+
+        return { success: true }
+    } catch (error: any) {
+        console.error("Erro ao salvar configurações do portal:", error)
+        return {
+            success: false,
+            error: error?.message || "Falha ao salvar as configurações personalizadas do portal.",
+        }
+    }
+}
+
+/**
+ * Obtém as configurações atuais do portal do grupo com suas notícias e eventos.
+ */
+export async function obterConfiguracaoPortalAction(grupoId: string) {
+    try {
+        const grupo = await prisma.grupoPesquisa.findUnique({
+            where: { id: grupoId },
+            include: {
+                noticias: {
+                    orderBy: { data: "desc" },
+                },
+                eventos: {
+                    orderBy: { data: "asc" },
+                },
+            },
+        })
+
+        if (!grupo) {
+            return { success: false, error: "Grupo não encontrado." }
+        }
+
+        return {
+            success: true,
+            data: {
+                corPrimaria: grupo.corPrimaria || "#2563eb",
+                corSecundaria: grupo.corSecundaria || "#0284c7",
+                sobre: grupo.sobre || "",
+                logoUrl: grupo.logoUrl || "",
+                redesSociais: (grupo.redesSociais as any) || {},
+                customSettings: (grupo.customSettings as any) || {},
+                noticias: grupo.noticias.map((n) => ({
+                    id: n.id,
+                    titulo: n.titulo,
+                    resumo: n.resumo,
+                    conteudo: n.conteudo,
+                    data: n.data.toISOString().split("T")[0],
+                    link: n.link || "",
+                })),
+                eventos: grupo.eventos.map((e) => ({
+                    id: e.id,
+                    titulo: e.titulo,
+                    descricao: e.descricao,
+                    data: e.data.toISOString().split("T")[0],
+                    local: e.local || "",
+                    link: e.link || "",
+                })),
+            },
+        }
+    } catch (error: any) {
+        console.error("Erro ao obter configurações do portal:", error)
+        return {
+            success: false,
+            error: error?.message || "Falha ao carregar configurações do portal.",
+        }
+    }
+}
+

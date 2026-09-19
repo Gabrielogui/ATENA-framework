@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { LogOut, User as UserIcon, Building2, CheckCircle2, AlertTriangle, Link2 } from "lucide-react"
 import { FeatureConfigurator } from "@/components/admin/FeatureConfigurator"
 import { GroupLinker } from "@/components/admin/GroupLinker"
+import { PortalCustomizerModal } from "@/components/admin/PortalCustomizerModal"
 import { Badge } from "@/components/ui/badge"
 
 export default async function AdminDashboard() {
@@ -19,12 +20,21 @@ export default async function AdminDashboard() {
     let grupo = userGrupoId
         ? await prisma.grupoPesquisa.findUnique({
               where: { id: userGrupoId },
+              include: {
+                  noticias: { orderBy: { data: "desc" } },
+                  eventos: { orderBy: { data: "asc" } },
+              },
           })
         : null
 
     // Se a conta não tiver grupoId específico, busca o primeiro grupo existente no banco (dev fallback)
     if (!grupo) {
-        grupo = await prisma.grupoPesquisa.findFirst()
+        grupo = await prisma.grupoPesquisa.findFirst({
+            include: {
+                noticias: { orderBy: { data: "desc" } },
+                eventos: { orderBy: { data: "asc" } },
+            },
+        })
     }
 
     return (
@@ -70,6 +80,45 @@ export default async function AdminDashboard() {
                             currentDgpId={grupo.dgpId}
                             currentNome={grupo.nome}
                         />
+
+                        {/* Seção de Customização de Dados Extras e Cores */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5 shadow-xs">
+                            <div className="space-y-1">
+                                <h3 className="text-base font-bold text-foreground">
+                                    Identidade Visual e Informações do Grupo
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    Personalize cores do portal gerado, logomarca, descrição institucional ("Sobre"), redes sociais, notícias e eventos.
+                                </p>
+                            </div>
+                            <PortalCustomizerModal
+                                grupoId={grupo.id}
+                                grupoNome={grupo.nome}
+                                initialData={{
+                                    corPrimaria: grupo.corPrimaria || "#2563eb",
+                                    corSecundaria: grupo.corSecundaria || "#0284c7",
+                                    sobre: grupo.sobre || "",
+                                    logoUrl: grupo.logoUrl || "",
+                                    redesSociais: (grupo.redesSociais as any) || {},
+                                    noticias: grupo.noticias.map((n) => ({
+                                        id: n.id,
+                                        titulo: n.titulo,
+                                        resumo: n.resumo,
+                                        conteudo: n.conteudo || undefined,
+                                        data: n.data.toISOString().split("T")[0],
+                                        link: n.link || undefined,
+                                    })),
+                                    eventos: grupo.eventos.map((e) => ({
+                                        id: e.id,
+                                        titulo: e.titulo,
+                                        descricao: e.descricao,
+                                        data: e.data.toISOString().split("T")[0],
+                                        local: e.local || undefined,
+                                        link: e.link || undefined,
+                                    })),
+                                }}
+                            />
+                        </div>
 
                         {/* Configurador de Features do SPL */}
                         <FeatureConfigurator

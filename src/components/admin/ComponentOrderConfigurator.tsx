@@ -14,7 +14,11 @@ import {
     FolderGit2,
     BookOpen,
     Layers,
-    Info
+    Info,
+    Globe,
+    Newspaper,
+    Calendar,
+    Share2,
 } from "lucide-react"
 
 export interface SectionMeta {
@@ -32,6 +36,13 @@ export const AVAILABLE_SECTIONS: SectionMeta[] = [
         description: "Barra de pesquisa para explorar publicações e pesquisadores",
         icon: Search,
         featureIds: ["F06", "F07", "F08"],
+    },
+    {
+        id: "sobre",
+        title: "Sobre o Grupo",
+        description: "Histórico, contexto e apresentação institucional do grupo",
+        icon: Globe,
+        featureIds: ["F15"],
     },
     {
         id: "missao",
@@ -60,6 +71,27 @@ export const AVAILABLE_SECTIONS: SectionMeta[] = [
         description: "Artigos, periódicos, qualificações Qualis e publicações com DOI",
         icon: BookOpen,
         featureIds: ["F04"],
+    },
+    {
+        id: "noticias",
+        title: "Notícias e Atualizações",
+        description: "Comunicados e novidades das pesquisas do laboratório",
+        icon: Newspaper,
+        featureIds: ["F10"],
+    },
+    {
+        id: "eventos",
+        title: "Eventos e Seminários",
+        description: "Cronograma de atividades acadêmicas, palestras e encontros",
+        icon: Calendar,
+        featureIds: ["F17"],
+    },
+    {
+        id: "redes",
+        title: "Redes Sociais",
+        description: "Canais oficiais de divulgação científica do grupo",
+        icon: Share2,
+        featureIds: ["F11"],
     },
 ]
 

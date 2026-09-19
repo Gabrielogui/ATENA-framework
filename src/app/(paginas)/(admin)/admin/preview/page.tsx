@@ -14,6 +14,10 @@ import ResearchLine from "@/components/researchGroup/ResearchLine"
 import ResearcherCardDetails from "@/components/researcher/ResearcherCardDatails"
 import ResearcherCard from "@/components/researcher/ResearcherCard"
 import PublicationCard from "@/components/publication/PublicationCard"
+import About from "@/components/researchGroup/About"
+import SocialLinks from "@/components/researchGroup/SocialLinks"
+import NewsSection from "@/components/news/NewsSection"
+import EventsSection from "@/components/event/EventsSection"
 
 // Camada de Serviço
 import { ProducaoDetalhe } from "@/core/producao"
@@ -43,7 +47,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         .map((s) => s.trim())
         .filter(Boolean)
 
-    const defaultOrder = ["search", "membros", "missao", "linhas", "publicacoes"]
+    const defaultOrder = ["search", "sobre", "membros", "missao", "linhas", "publicacoes", "noticias", "eventos", "redes"]
     const sectionOrder = Array.from(new Set([...customOrder, ...defaultOrder]))
 
     // Resolução do ID do grupo: searchParams -> session -> consulta no banco
@@ -51,19 +55,28 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
     const rawGrupoId = resolvedParams.grupoId || user?.apiGrupoId || user?.grupoId
 
     let grupoId = rawGrupoId
+    let grupoLocal = null
+
     if (rawGrupoId) {
-        const grupoLocal = await prisma.grupoPesquisa.findFirst({
+        grupoLocal = await prisma.grupoPesquisa.findFirst({
             where: {
                 OR: [
                     { id: rawGrupoId },
                     { apiGrupoId: rawGrupoId },
                 ],
             },
+            include: {
+                noticias: { orderBy: { data: "desc" } },
+                eventos: { orderBy: { data: "asc" } },
+            },
         })
         if (grupoLocal?.apiGrupoId) {
             grupoId = grupoLocal.apiGrupoId
         }
     }
+
+    const corPrimaria = grupoLocal?.corPrimaria || "#2563eb"
+    const corSecundaria = grupoLocal?.corSecundaria || "#0284c7"
 
     // Fallback padrão se nada for encontrado
     if (!grupoId) {
@@ -100,8 +113,9 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
     // Features com componentes visuais prontos
     const implementedFeatureIds = [
         "F01", "F02", "F03", "F04", "F05",
-        "F06", "F07", "F08", "F09", "F11",
-        "F12", "F13", "F14", "F18", "F19"
+        "F06", "F07", "F08", "F09", "F10",
+        "F11", "F12", "F13", "F14", "F15",
+        "F17", "F18", "F19"
     ]
 
     const pendingFeatures = selectedIds
@@ -110,30 +124,40 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         .filter(Boolean)
 
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-900">
+        <div
+            className="min-h-screen bg-background text-foreground"
+            style={{
+                "--primary": corPrimaria,
+                "--secondary": corSecundaria,
+                "--primary-light": `${corPrimaria}15`,
+                "--primary-border": `${corPrimaria}40`,
+                "--secondary-light": `${corSecundaria}15`,
+                "--secondary-border": `${corSecundaria}40`,
+            } as React.CSSProperties}
+        >
             {/* Barra de Controle de Simulação */}
-            <header className="top-0 z-50 border-b border-slate-200 bg-white/95 px-6 py-3 shadow-xs backdrop-blur-md">
+            <header className="sticky top-0 z-50 border-b border-border bg-card/95 px-6 py-3 shadow-xs backdrop-blur-md">
                 <div className="mx-auto flex max-w-7xl items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link href="/admin">
-                            <Button variant="outline" size="sm" className="gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50">
+                            <Button variant="outline" size="sm" className="gap-1.5 border-border text-foreground hover:bg-muted/80">
                                 <ArrowLeft className="h-4 w-4" /> Voltar à Configuração
                             </Button>
                         </Link>
-                        <div className="h-4 w-px bg-slate-200" />
+                        <div className="h-4 w-px bg-border" />
                         <div className="flex items-center gap-2">
-                            <MonitorPlay className="h-4 w-4 text-indigo-600" />
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                            <MonitorPlay className="h-4 w-4 text-primary" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-foreground">
                                 Simulação do Portal Derivado (SPL)
                             </span>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <span className="hidden text-xs text-slate-500 md:inline">
-                            Grupo ID: <strong className="font-mono text-slate-700">{grupoId}</strong>
+                        <span className="hidden text-xs text-muted-foreground md:inline">
+                            Grupo ID: <strong className="font-mono text-foreground">{grupoId}</strong>
                         </span>
-                        <Badge variant="outline" className="border-indigo-200 bg-indigo-50 font-mono text-indigo-700">
+                        <Badge variant="outline" className="border-primary/30 bg-primary/10 font-mono text-primary">
                             <Layers className="mr-1 h-3.5 w-3.5" />
                             {selectedIds.length} Features Ativas
                         </Badge>
@@ -154,7 +178,9 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                 /* Estrutura do Portal Derivado */
                 <div className="mx-auto flex items-start gap-6 p-4">
                     {/* Sidebar (F01, F02, F11, F12, F13, F14) */}
-                    {(has("F01") || has("F02") || has("F14")) && <Sidebar grupo={grupo as any} />}
+                    {(has("F01") || has("F02") || has("F14")) && (
+                        <Sidebar grupo={grupo as any} logoUrl={grupoLocal?.logoUrl} />
+                    )}
 
                     {/* Área Central Reordenável com Base na Configuração SPL */}
                     <main className="flex flex-1 flex-col gap-8 py-4">
@@ -167,10 +193,21 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                         </section>
                                     ) : null
 
+                                case "sobre":
+                                    return has("F15") ? (
+                                        <section key="sobre" id="sobre">
+                                            <About
+                                                sobre={grupoLocal?.sobre}
+                                                nomeGrupo={grupo.nome}
+                                                anoFormacao={grupo.anoFormacao}
+                                            />
+                                        </section>
+                                    ) : null
+
                                 case "membros":
                                     return has("F03") ? (
                                         <section key="membros" id="membros" className="space-y-3">
-                                            <h2 className="text-xl font-bold text-slate-900">Membros e Pesquisadores</h2>
+                                            <h2 className="text-xl font-bold text-foreground">Membros e Pesquisadores</h2>
                                             {membros.length > 0 ? (
                                                 has("F18") ? (
                                                     <div className="flex flex-col gap-4">
@@ -190,7 +227,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                                     </div>
                                                 )
                                             ) : (
-                                                <p className="text-sm italic text-gray-500">Nenhum membro cadastrado.</p>
+                                                <p className="text-sm italic text-muted-foreground">Nenhum membro cadastrado.</p>
                                             )}
                                         </section>
                                     ) : null
@@ -205,7 +242,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                 case "linhas":
                                     return has("F05") ? (
                                         <section key="linhas" id="linhas" className="space-y-3">
-                                            <h2 className="text-xl font-bold text-slate-900">Linhas de Pesquisa</h2>
+                                            <h2 className="text-xl font-bold text-foreground">Linhas de Pesquisa</h2>
                                             {linhas.length > 0 ? (
                                                 <div className="space-y-3">
                                                     {linhas.map((linha) => (
@@ -213,7 +250,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-sm italic text-gray-500">Nenhuma linha de pesquisa registrada.</p>
+                                                <p className="text-sm italic text-muted-foreground">Nenhuma linha de pesquisa registrada.</p>
                                             )}
                                         </section>
                                     ) : null
@@ -221,7 +258,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                 case "publicacoes":
                                     return has("F04") ? (
                                         <section key="publicacoes" id="publicacoes" className="space-y-3">
-                                            <h2 className="text-xl font-bold text-slate-900">Produções Científicas</h2>
+                                            <h2 className="text-xl font-bold text-foreground">Produções Científicas</h2>
                                             {publicacoes.length > 0 ? (
                                                 <div className="space-y-3">
                                                     {publicacoes.map((pub) => (
@@ -229,10 +266,31 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="rounded-2xl border border-gray-100 bg-white p-6 text-sm italic text-gray-500 shadow-xs">
+                                                <div className="rounded-2xl border border-border bg-card p-6 text-sm italic text-muted-foreground shadow-xs">
                                                     Nenhuma produção científica indexada para este grupo na API.
                                                 </div>
                                             )}
+                                        </section>
+                                    ) : null
+
+                                case "noticias":
+                                    return has("F10") ? (
+                                        <section key="noticias" id="noticias">
+                                            <NewsSection noticias={grupoLocal?.noticias || []} />
+                                        </section>
+                                    ) : null
+
+                                case "eventos":
+                                    return has("F17") ? (
+                                        <section key="eventos" id="eventos">
+                                            <EventsSection eventos={grupoLocal?.eventos || []} />
+                                        </section>
+                                    ) : null
+
+                                case "redes":
+                                    return has("F11") ? (
+                                        <section key="redes" id="redes">
+                                            <SocialLinks redes={grupoLocal?.redesSociais as any} />
                                         </section>
                                     ) : null
 
@@ -243,26 +301,26 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
 
                         {/* Placeholders das Features Selecionadas sem Componente Pronto */}
                         {pendingFeatures.length > 0 && (
-                            <section className="space-y-3 pt-4 border-t border-slate-200">
-                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                            <section className="space-y-3 pt-4 border-t border-border">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                                     Módulos Ativos em Desenvolvimento
                                 </h3>
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     {pendingFeatures.map((feat) => (
                                         <div
                                             key={feat!.id}
-                                            className="flex items-center justify-between rounded-xl border border-dashed border-indigo-200 bg-indigo-50/40 p-4 text-xs shadow-2xs"
+                                            className="flex items-center justify-between rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4 text-xs shadow-2xs"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 font-mono font-bold text-indigo-700">
+                                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 font-mono font-bold text-primary">
                                                     {feat!.id}
                                                 </div>
                                                 <div>
-                                                    <h4 className="font-semibold text-slate-800">{feat!.name}</h4>
-                                                    <p className="text-slate-500">{feat!.descricao}</p>
+                                                    <h4 className="font-semibold text-foreground">{feat!.name}</h4>
+                                                    <p className="text-muted-foreground">{feat!.descricao}</p>
                                                 </div>
                                             </div>
-                                            <Badge variant="outline" className="border-indigo-300 text-[10px] text-indigo-600">
+                                            <Badge variant="outline" className="border-primary/30 bg-card text-[10px] text-primary">
                                                 Em Breve
                                             </Badge>
                                         </div>
