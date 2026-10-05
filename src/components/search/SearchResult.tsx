@@ -14,6 +14,8 @@ interface SearchResultProps {
     total?: number
     error?: string
     onClear?: () => void
+    hasDetails?: boolean
+    instituicaoNome?: string
 }
 
 export default function SearchResult({
@@ -24,6 +26,8 @@ export default function SearchResult({
     total,
     error,
     onClear,
+    hasDetails,
+    instituicaoNome,
 }: SearchResultProps) {
     if (!query && !loading && results.length === 0) {
         return null
@@ -112,7 +116,12 @@ export default function SearchResult({
             {!loading && results.length > 0 && (
                 <div className="flex flex-wrap gap-4 pt-2">
                     {results.map((pesquisador) => (
-                        <ResearcherCard key={pesquisador.id} pesquisador={pesquisador} />
+                        <ResearcherCard
+                            key={pesquisador.id}
+                            pesquisador={pesquisador}
+                            hasDetails={hasDetails}
+                            instituicaoNome={instituicaoNome}
+                        />
                     ))}
                 </div>
             )}

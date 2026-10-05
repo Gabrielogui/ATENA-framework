@@ -11,6 +11,8 @@ interface SearchSectionProps {
     hasLexica?: boolean
     hasSemantica?: boolean
     hasResultado?: boolean
+    hasDetails?: boolean
+    instituicaoNome?: string
 }
 
 export default function SearchSection({
@@ -18,6 +20,8 @@ export default function SearchSection({
     hasLexica = true,
     hasSemantica = true,
     hasResultado = true,
+    hasDetails = false,
+    instituicaoNome,
 }: SearchSectionProps) {
     const [results, setResults] = useState<Pesquisador[]>([])
     const [loading, setLoading] = useState(false)
@@ -84,6 +88,8 @@ export default function SearchSection({
                     searchType={currentType}
                     error={error}
                     onClear={handleClear}
+                    hasDetails={hasDetails}
+                    instituicaoNome={instituicaoNome}
                 />
             )}
         </div>

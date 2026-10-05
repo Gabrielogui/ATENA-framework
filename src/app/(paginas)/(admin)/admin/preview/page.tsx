@@ -11,7 +11,6 @@ import Sidebar from "@/components/SideBar"
 import SearchSection from "@/components/search/SearchSection"
 import Mission from "@/components/researchGroup/Mission"
 import ResearchLine from "@/components/researchGroup/ResearchLine"
-import ResearcherCardDetails from "@/components/researcher/ResearcherCardDatails"
 import ResearcherCard from "@/components/researcher/ResearcherCard"
 import PublicationCard from "@/components/publication/PublicationCard"
 import About from "@/components/researchGroup/About"
@@ -194,6 +193,8 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                                 hasLexica={has("F06")}
                                                 hasSemantica={has("F07")}
                                                 hasResultado={has("F08")}
+                                                hasDetails={has("F18")}
+                                                instituicaoNome={instituicaoSedeNome}
                                             />
                                         </section>
                                     ) : null
@@ -214,23 +215,16 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                         <section key="membros" id="membros" className="space-y-3">
                                             <h2 className="text-xl font-bold text-foreground">Membros e Pesquisadores</h2>
                                             {membros.length > 0 ? (
-                                                has("F18") ? (
-                                                    <div className="flex flex-col gap-4">
-                                                        {membros.slice(0, 7).map((p) => (
-                                                            <ResearcherCardDetails
-                                                                key={p.id}
-                                                                pesquisador={p}
-                                                                instituicaoNome={instituicaoSedeNome}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-wrap gap-4">
-                                                        {membros.slice(0, 7).map((p) => (
-                                                            <ResearcherCard key={p.id} pesquisador={p} />
-                                                        ))}
-                                                    </div>
-                                                )
+                                                <div className="flex flex-wrap gap-4">
+                                                    {membros.slice(0, 7).map((p) => (
+                                                        <ResearcherCard
+                                                            key={p.id}
+                                                            pesquisador={p}
+                                                            hasDetails={has("F18")}
+                                                            instituicaoNome={instituicaoSedeNome}
+                                                        />
+                                                    ))}
+                                                </div>
                                             ) : (
                                                 <p className="text-sm italic text-muted-foreground">Nenhum membro cadastrado.</p>
                                             )}

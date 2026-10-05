@@ -4,20 +4,38 @@ import { Pesquisador } from "@/core/researcher";
 import { Book } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import ResearcherCardDetails from "./ResearcherCardDatails";
 
 interface ResearcherCardProps {
     pesquisador: Pesquisador;
+    hasDetails?: boolean;
+    instituicaoNome?: string;
 }
 
-export default function ResearcherCard({ pesquisador } : ResearcherCardProps) {
-    const [openDrawer, setOpenDrawer] = useState(false);
+export default function ResearcherCard({
+    pesquisador,
+    hasDetails = false,
+    instituicaoNome,
+}: ResearcherCardProps) {
+    const [openModal, setOpenModal] = useState(false);
+
+    const handleClick = () => {
+        if (hasDetails) {
+            setOpenModal(true);
+        } else {
+            window.open(`http://lattes.cnpq.br/${pesquisador.lattesId}`, "_blank");
+        }
+    };
 
     return (
         <>
             <div
-                className="group relative flex h-75 w-50 cursor-pointer flex-col overflow-hidden rounded-md border-2 bg-black p-2">
+                onClick={handleClick}
+                className="group relative flex h-75 w-50 cursor-pointer flex-col overflow-hidden rounded-md border-2 bg-black p-2 transition-transform hover:scale-[1.02]"
+            >
                 <div
-                    className={`absolute inset-0 bg-cover bg-center opacity-70 transition-opacity duration-300 group-hover:opacity-45`}>
+                    className={`absolute inset-0 bg-cover bg-center opacity-70 transition-opacity duration-300 group-hover:opacity-45`}
+                >
                     <Image
                         fill
                         alt="Imagem do pesquisador"
@@ -41,8 +59,15 @@ export default function ResearcherCard({ pesquisador } : ResearcherCardProps) {
                         <p className="mb-1">{pesquisador.tipo}</p>
                     </div>
                 </div>
-                
             </div>
+
+            {hasDetails && openModal && (
+                <ResearcherCardDetails
+                    pesquisador={pesquisador}
+                    instituicaoNome={instituicaoNome}
+                    onClose={() => setOpenModal(false)}
+                />
+            )}
         </>
     );
 }
