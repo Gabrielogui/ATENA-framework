@@ -139,7 +139,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
             <header className="sticky top-0 z-50 border-b border-border bg-card/95 px-6 py-3 shadow-xs backdrop-blur-md">
                 <div className="mx-auto flex max-w-7xl items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Link href="/admin">
+                        <Link href={`/admin?grupoId=${encodeURIComponent(grupoLocal?.id || rawGrupoId)}`}>
                             <Button variant="outline" size="sm" className="gap-1.5 border-border text-foreground hover:bg-muted/80">
                                 <ArrowLeft className="h-4 w-4" /> Voltar à Configuração
                             </Button>

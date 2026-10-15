@@ -124,8 +124,9 @@ export function GroupLinker({
                 apiGrupoId: targetApiId,
             })
 
-            if (result.success) {
-                setSuccessMsg("Grupo vinculado com sucesso à API acadêmica!")
+            if (result.success && result.grupo) {
+                setSuccessMsg(`Grupo "${result.grupo.nome}" selecionado com sucesso!`)
+                router.push(`/admin?grupoId=${result.grupo.id}`)
                 router.refresh()
                 if (onLinked) onLinked()
             } else {

@@ -111,25 +111,70 @@ export async function vincularGrupoApi({ grupoId, apiGrupoId }: VincularGrupoPar
             }
         }
 
-        // Atualiza os dados no banco do framework
-        const grupoAtualizado = await prisma.grupoPesquisa.update({
-            where: { id: grupoId },
-            data: {
-                apiGrupoId: dadosApi.id,
-                dgpId: dadosApi.dgpId || null,
-                nome: dadosApi.nome || undefined,
-                anoFormacao: dadosApi.anoFormacao || undefined,
-                situacao: dadosApi.situacao || undefined,
-                repercussao: dadosApi.repercussao || undefined,
+        const userId = session.user.id
+
+        // 1. Verifica se já existe um registro para este grupo específico da API no banco local
+        let grupoAlvo = await prisma.grupoPesquisa.findUnique({
+            where: { apiGrupoId: dadosApi.id },
+            include: {
+                noticias: true,
+                eventos: true,
             },
         })
 
-        // Garante que o usuário atual tenha o grupoId associado no banco se ainda não tiver
-        const userId = session.user.id
+        if (!grupoAlvo) {
+            // Verifica se o grupo atual informado (grupoId) é apenas um placeholder sem apiGrupoId
+            const grupoAtual = grupoId
+                ? await prisma.grupoPesquisa.findUnique({ where: { id: grupoId } })
+                : null
+
+            if (grupoAtual && !grupoAtual.apiGrupoId) {
+                // Se o grupo atual era apenas um registro vazio/sem vínculo prévio, preenche ele
+                grupoAlvo = await prisma.grupoPesquisa.update({
+                    where: { id: grupoAtual.id },
+                    data: {
+                        apiGrupoId: dadosApi.id,
+                        dgpId: dadosApi.dgpId || null,
+                        nome: dadosApi.nome || undefined,
+                        anoFormacao: dadosApi.anoFormacao || undefined,
+                        situacao: dadosApi.situacao || undefined,
+                        repercussao: dadosApi.repercussao || undefined,
+                        publicado: false, // Inicia em rascunho
+                    },
+                    include: {
+                        noticias: true,
+                        eventos: true,
+                    },
+                })
+            } else {
+                // Caso contrário (o grupo atual já é outro grupo ou não existe), CRIA UM NOVO REGISTRO ISOLADO
+                grupoAlvo = await prisma.grupoPesquisa.create({
+                    data: {
+                        apiGrupoId: dadosApi.id,
+                        dgpId: dadosApi.dgpId || null,
+                        nome: dadosApi.nome,
+                        anoFormacao: dadosApi.anoFormacao || undefined,
+                        situacao: dadosApi.situacao || undefined,
+                        repercussao: dadosApi.repercussao || undefined,
+                        publicado: false, // NOVO GRUPO COMEÇA EM RASCUNHO!
+                        corPrimaria: "#2563eb",
+                        corSecundaria: "#0284c7",
+                        featuresSelecionadas: [],
+                        ordemSecoes: [],
+                    },
+                    include: {
+                        noticias: true,
+                        eventos: true,
+                    },
+                })
+            }
+        }
+
+        // Atualiza a associação do usuário para o grupo selecionado
         if (userId) {
             await prisma.user.update({
                 where: { id: userId },
-                data: { grupoId },
+                data: { grupoId: grupoAlvo.id },
             }).catch(() => {})
         }
 
@@ -138,16 +183,11 @@ export async function vincularGrupoApi({ grupoId, apiGrupoId }: VincularGrupoPar
 
         return {
             success: true,
-            grupo: grupoAtualizado,
+            grupo: grupoAlvo,
+            redirectUrl: `/admin?grupoId=${grupoAlvo.id}`,
         }
     } catch (error: any) {
         console.error("Erro ao vincular grupo:", error)
-        if (error?.code === "P2002") {
-            return {
-                success: false,
-                error: "Este grupo da API já está vinculado a outro registro no sistema.",
-            }
-        }
         return {
             success: false,
             error: error?.message || "Ocorreu um erro interno ao vincular o grupo.",

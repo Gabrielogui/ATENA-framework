@@ -7,28 +7,42 @@ import { FeatureConfigurator } from "@/components/admin/FeatureConfigurator"
 import { GroupLinker } from "@/components/admin/GroupLinker"
 import { PortalCustomizerModal } from "@/components/admin/PortalCustomizerModal"
 import { PublicationStatusCard } from "@/components/admin/PublicationStatusCard"
+import { GroupSwitcher } from "@/components/admin/GroupSwitcher"
 import { Badge } from "@/components/ui/badge"
 
-export default async function AdminDashboard() {
+interface AdminDashboardProps {
+    searchParams: Promise<{ grupoId?: string }>
+}
+
+export default async function AdminDashboard({ searchParams }: AdminDashboardProps) {
     const session = await auth()
 
     if (!session?.user) {
         redirect("/login")
     }
 
+    const resolvedParams = await searchParams
     const userGrupoId = (session.user as any).grupoId
+    const targetGrupoId = resolvedParams.grupoId || userGrupoId
 
-    let grupo = userGrupoId
-        ? await prisma.grupoPesquisa.findUnique({
-              where: { id: userGrupoId },
-              include: {
-                  noticias: { orderBy: { data: "desc" } },
-                  eventos: { orderBy: { data: "asc" } },
-              },
-          })
-        : null
+    let grupo = null
 
-    // Se a conta não tiver grupoId específico, busca o primeiro grupo existente no banco (dev fallback)
+    if (targetGrupoId) {
+        grupo = await prisma.grupoPesquisa.findFirst({
+            where: {
+                OR: [
+                    { id: targetGrupoId },
+                    { apiGrupoId: targetGrupoId },
+                ],
+            },
+            include: {
+                noticias: { orderBy: { data: "desc" } },
+                eventos: { orderBy: { data: "asc" } },
+            },
+        })
+    }
+
+    // Se o grupo específico não foi encontrado ou não informado, busca o primeiro existente no banco
     if (!grupo) {
         grupo = await prisma.grupoPesquisa.findFirst({
             include: {
@@ -37,6 +51,18 @@ export default async function AdminDashboard() {
             },
         })
     }
+
+    // Busca todos os grupos cadastrados no banco para o alternador
+    const todosGrupos = await prisma.grupoPesquisa.findMany({
+        select: {
+            id: true,
+            nome: true,
+            apiGrupoId: true,
+            publicado: true,
+            slug: true,
+        },
+        orderBy: { nome: "asc" },
+    })
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -74,7 +100,13 @@ export default async function AdminDashboard() {
             <main className="mx-auto max-w-7xl px-6 py-8 space-y-8">
                 {grupo ? (
                     <>
-                        {/* Status de Publicação do Portal */}
+                        {/* Seletor Rápido de Grupo (caso haja mais de um no banco) */}
+                        <GroupSwitcher
+                            grupos={todosGrupos}
+                            currentGrupoId={grupo.id}
+                        />
+
+                        {/* Status de Publicação do Portal Selecionado */}
                         <PublicationStatusCard
                             grupoId={grupo.id}
                             grupoNome={grupo.nome}

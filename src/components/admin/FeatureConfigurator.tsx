@@ -103,7 +103,7 @@ export function FeatureConfigurator({
 
         const featuresParam = selectedIds.join(",")
         const orderParam = componentOrder.join(",")
-        const targetId = apiGrupoId || grupoId
+        const targetId = grupoId || apiGrupoId || ""
         router.push(
             `/admin/preview?grupoId=${encodeURIComponent(targetId)}&features=${featuresParam}&order=${orderParam}`
         )
