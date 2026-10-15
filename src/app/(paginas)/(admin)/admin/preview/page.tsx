@@ -23,6 +23,7 @@ import { ProducaoDetalhe } from "@/core/producao"
 import { Pesquisador } from "@/core/researcher"
 import { getGrupoPesquisaPorId, getProducoesPorGrupo } from "@/service/researchGroupService"
 import { prisma } from "@/lib/prisma"
+import { PublicationControl } from "@/components/admin/PublicationControl"
 
 interface PreviewPageProps {
     searchParams: Promise<{ features?: string; grupoId?: string; order?: string }>
@@ -153,13 +154,19 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <span className="hidden text-xs text-muted-foreground md:inline">
-                            Grupo ID: <strong className="font-mono text-foreground">{grupoId}</strong>
-                        </span>
-                        <Badge variant="outline" className="border-primary/30 bg-primary/10 font-mono text-primary">
+                        <Badge variant="outline" className="border-primary/30 bg-primary/10 font-mono text-primary hidden sm:flex">
                             <Layers className="mr-1 h-3.5 w-3.5" />
                             {selectedIds.length} Features Ativas
                         </Badge>
+                        <div className="h-4 w-px bg-border hidden sm:block" />
+                        <PublicationControl
+                            grupoId={grupoLocal?.id || rawGrupoId}
+                            grupoNome={grupo?.nome || grupoLocal?.nome || "Grupo de Pesquisa"}
+                            currentSlug={grupoLocal?.slug}
+                            isPublicado={Boolean(grupoLocal?.publicado)}
+                            selectedFeatures={selectedIds}
+                            componentOrder={sectionOrder}
+                        />
                     </div>
                 </div>
             </header>

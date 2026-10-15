@@ -12,29 +12,44 @@ import { Feature } from "@/core/feature"
 import { FeatureCard } from "./FeatureCard"
 import { ComponentOrderConfigurator, AVAILABLE_SECTIONS } from "./ComponentOrderConfigurator"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Sliders, MoveVertical } from "lucide-react"
+import { Sliders, MoveVertical, Eye } from "lucide-react"
 
 interface FeatureConfiguratorProps {
     grupoId: string
     grupoNome: string
     apiGrupoId?: string | null
     dgpId?: string | null
+    initialSelectedFeatures?: string[]
+    initialOrder?: string[]
 }
 
-export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: FeatureConfiguratorProps) {
+export function FeatureConfigurator({
+    grupoId,
+    grupoNome,
+    apiGrupoId,
+    dgpId,
+    initialSelectedFeatures,
+    initialOrder,
+}: FeatureConfiguratorProps) {
     const router = useRouter()
 
-    // Inicializa já com as features obrigatórias raiz marcadas por padrão (exceto as que requerem outra feature)
-    const [selectedIds, setSelectedIds] = useState<string[]>(() =>
-        featureModel
+    // Inicializa com as features salvas ou as obrigatórias raiz
+    const [selectedIds, setSelectedIds] = useState<string[]>(() => {
+        if (initialSelectedFeatures && initialSelectedFeatures.length > 0) {
+            return initialSelectedFeatures
+        }
+        return featureModel
             .filter((f) => (f.tipo === "obrigatorio" || f.prioridade === "must") && (!f.requer || f.requer.length === 0))
             .map((f) => f.id)
-    )
+    })
 
-    // Ordem vertical padrão dos componentes na página
-    const [componentOrder, setComponentOrder] = useState<string[]>(() =>
-        AVAILABLE_SECTIONS.map((s) => s.id)
-    )
+    // Ordem vertical dos componentes
+    const [componentOrder, setComponentOrder] = useState<string[]>(() => {
+        if (initialOrder && initialOrder.length > 0) {
+            return initialOrder
+        }
+        return AVAILABLE_SECTIONS.map((s) => s.id)
+    })
 
     const [gerando, setGerando] = useState(false)
 
@@ -197,12 +212,12 @@ export function FeatureConfigurator({ grupoId, grupoNome, apiGrupoId, dgpId }: F
                         {gerando ? (
                             <>
                                 <RefreshCw className="mr-2 h-5 w-5 animate-spin" />
-                                Compilando e Derivando Portal...
+                                Carregando Pré-visualização...
                             </>
                         ) : (
                             <>
-                                <Sparkles className="mr-2 h-5 w-5 text-primary-foreground/90" />
-                                Publicar e Visualizar Portal
+                                <Eye className="mr-2 h-5 w-5 text-primary-foreground/90" />
+                                Pré-visualizar Portal
                             </>
                         )}
                     </Button>

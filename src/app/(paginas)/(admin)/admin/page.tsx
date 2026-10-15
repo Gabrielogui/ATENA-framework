@@ -6,6 +6,7 @@ import { LogOut, User as UserIcon, Building2, CheckCircle2, AlertTriangle, Link2
 import { FeatureConfigurator } from "@/components/admin/FeatureConfigurator"
 import { GroupLinker } from "@/components/admin/GroupLinker"
 import { PortalCustomizerModal } from "@/components/admin/PortalCustomizerModal"
+import { PublicationStatusCard } from "@/components/admin/PublicationStatusCard"
 import { Badge } from "@/components/ui/badge"
 
 export default async function AdminDashboard() {
@@ -73,6 +74,16 @@ export default async function AdminDashboard() {
             <main className="mx-auto max-w-7xl px-6 py-8 space-y-8">
                 {grupo ? (
                     <>
+                        {/* Status de Publicação do Portal */}
+                        <PublicationStatusCard
+                            grupoId={grupo.id}
+                            grupoNome={grupo.nome}
+                            slug={grupo.slug}
+                            publicado={grupo.publicado}
+                            publicadoEm={grupo.publicadoEm}
+                            featuresSelecionadas={grupo.featuresSelecionadas}
+                        />
+
                         {/* Seção de Vinculação com a API Acadêmica */}
                         <GroupLinker
                             grupoLocalId={grupo.id}
@@ -126,6 +137,8 @@ export default async function AdminDashboard() {
                             grupoNome={grupo.nome}
                             apiGrupoId={grupo.apiGrupoId}
                             dgpId={grupo.dgpId}
+                            initialSelectedFeatures={grupo.featuresSelecionadas}
+                            initialOrder={grupo.ordemSecoes}
                         />
                     </>
                 ) : (

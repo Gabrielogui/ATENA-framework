@@ -25,14 +25,19 @@ model GrupoPesquisa {
   corPrimaria    String?       @default("#2563eb")
   corSecundaria  String?       @default("#0284c7")
   redesSociais   Json?
-  customSettings Json?
-  contato        String[]
-  pesquisadores  Pesquisador[]
-  noticias       Noticia[]
-  eventos        Evento[]
-  users          User[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  customSettings       Json?
+  contato              String[]
+  slug                 String?       @unique
+  publicado            Boolean       @default(false)
+  publicadoEm          DateTime?
+  featuresSelecionadas String[]      @default([])
+  ordemSecoes          String[]      @default([])
+  pesquisadores        Pesquisador[]
+  noticias             Noticia[]
+  eventos              Evento[]
+  users                User[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 }
 
 model Noticia {

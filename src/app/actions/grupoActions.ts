@@ -256,6 +256,15 @@ export async function salvarConfiguracaoPortalAction(input: ConfiguracaoPortalIn
         revalidatePath("/admin")
         revalidatePath("/admin/preview")
 
+        // Revalida a página pública do portal caso já esteja publicado
+        const grupoAposSalvar = await prisma.grupoPesquisa.findUnique({
+            where: { id: grupoId },
+            select: { slug: true, publicado: true },
+        })
+        if (grupoAposSalvar?.slug && grupoAposSalvar.publicado) {
+            revalidatePath(`/portal/${grupoAposSalvar.slug}`)
+        }
+
         return { success: true }
     } catch (error: any) {
         console.error("Erro ao salvar configurações do portal:", error)
@@ -319,6 +328,150 @@ export async function obterConfiguracaoPortalAction(grupoId: string) {
         return {
             success: false,
             error: error?.message || "Falha ao carregar configurações do portal.",
+        }
+    }
+}
+
+function sanitizarSlug(texto: string): string {
+    return texto
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+}
+
+export interface PublicarPortalInput {
+    grupoId: string
+    features: string[]
+    order: string[]
+    customSlug?: string
+}
+
+/**
+ * Publica o portal derivado com base nas escolhas da Linha de Produtos de Software (SPL).
+ */
+export async function publicarPortalAction({
+    grupoId,
+    features,
+    order,
+    customSlug,
+}: PublicarPortalInput) {
+    try {
+        const session = await auth()
+        if (!session?.user) {
+            return { success: false, error: "Não autorizado. Faça login novamente." }
+        }
+
+        const grupoAtual = await prisma.grupoPesquisa.findUnique({
+            where: { id: grupoId },
+        })
+
+        if (!grupoAtual) {
+            return { success: false, error: "Grupo de pesquisa não encontrado no banco de dados." }
+        }
+
+        // Determinar o slug
+        let baseSlug = ""
+        if (customSlug && customSlug.trim()) {
+            baseSlug = sanitizarSlug(customSlug)
+        } else if (grupoAtual.slug) {
+            baseSlug = grupoAtual.slug
+        } else {
+            // Tenta pegar a sigla antes do hífen (ex: "G2BC - Grupo de Pesquisa...")
+            const parteSigla = grupoAtual.nome.split(" - ")[0]
+            const slugSigla = sanitizarSlug(parteSigla)
+            baseSlug = slugSigla.length >= 2 ? slugSigla : sanitizarSlug(grupoAtual.nome)
+        }
+
+        if (!baseSlug) {
+            baseSlug = "grupo-" + grupoAtual.id.slice(0, 6)
+        }
+
+        // Garantir unicidade do slug
+        let finalSlug = baseSlug
+        let contador = 1
+        while (true) {
+            const existente = await prisma.grupoPesquisa.findFirst({
+                where: {
+                    slug: finalSlug,
+                    NOT: { id: grupoId },
+                },
+            })
+            if (!existente) break
+            finalSlug = `${baseSlug}-${contador}`
+            contador++
+        }
+
+        const grupoAtualizado = await prisma.grupoPesquisa.update({
+            where: { id: grupoId },
+            data: {
+                slug: finalSlug,
+                publicado: true,
+                publicadoEm: new Date(),
+                featuresSelecionadas: features,
+                ordemSecoes: order,
+            },
+        })
+
+        revalidatePath(`/portal/${finalSlug}`)
+        revalidatePath("/admin")
+        revalidatePath("/admin/preview")
+
+        return {
+            success: true,
+            slug: finalSlug,
+            url: `/portal/${finalSlug}`,
+            grupo: grupoAtualizado,
+        }
+    } catch (error: any) {
+        console.error("Erro ao publicar portal:", error)
+        return {
+            success: false,
+            error: error?.message || "Erro interno ao publicar o portal.",
+        }
+    }
+}
+
+/**
+ * Despublica o portal de um grupo, tornando a rota pública inacessível.
+ */
+export async function despublicarPortalAction(grupoId: string) {
+    try {
+        const session = await auth()
+        if (!session?.user) {
+            return { success: false, error: "Não autorizado. Faça login novamente." }
+        }
+
+        const grupo = await prisma.grupoPesquisa.findUnique({
+            where: { id: grupoId },
+        })
+
+        if (!grupo) {
+            return { success: false, error: "Grupo não encontrado." }
+        }
+
+        await prisma.grupoPesquisa.update({
+            where: { id: grupoId },
+            data: {
+                publicado: false,
+            },
+        })
+
+        if (grupo.slug) {
+            revalidatePath(`/portal/${grupo.slug}`)
+        }
+        revalidatePath("/admin")
+        revalidatePath("/admin/preview")
+
+        return { success: true }
+    } catch (error: any) {
+        console.error("Erro ao despublicar portal:", error)
+        return {
+            success: false,
+            error: error?.message || "Erro interno ao despublicar o portal.",
         }
     }
 }
