@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
-import { getGrupoPesquisaPorId, getProducoesPorGrupo } from "@/service/researchGroupService"
+import { getGrupoPesquisaPorId, getProducoesDoGrupo } from "@/service/researchGroupService"
 import { ProducaoDetalhe } from "@/core/producao"
 import { Pesquisador } from "@/core/researcher"
 
@@ -11,7 +11,7 @@ import SearchSection from "@/components/search/SearchSection"
 import Mission from "@/components/researchGroup/Mission"
 import ResearchLine from "@/components/researchGroup/ResearchLine"
 import ResearcherCard from "@/components/researcher/ResearcherCard"
-import PublicationCard from "@/components/publication/PublicationCard"
+import PublicationsSection from "@/components/publication/PublicationsSection"
 import About from "@/components/researchGroup/About"
 import SocialLinks from "@/components/researchGroup/SocialLinks"
 import NewsSection from "@/components/news/NewsSection"
@@ -84,14 +84,8 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
     let publicacoes: ProducaoDetalhe[] = []
 
     try {
-        const [{ data: grupoData }, producoesRes] = await Promise.all([
-            getGrupoPesquisaPorId(apiGrupoId),
-            getProducoesPorGrupo({ grupoId: apiGrupoId, page: 1, size: 10 }).catch(() => ({ data: [] })),
-        ])
+        const { data: grupoData } = await getGrupoPesquisaPorId(apiGrupoId)
         grupoApi = grupoData
-        publicacoes = Array.isArray(producoesRes.data)
-            ? producoesRes.data
-            : (producoesRes.data as any)?.data || []
     } catch (err) {
         console.error("Erro ao carregar dados da API acadêmica para o portal:", err)
     }
@@ -114,6 +108,15 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
 
     const linhas = (grupo?.linhasPesquisa || []).filter(Boolean)
     const instituicaoSedeNome = grupo?.instituicoes?.find((i: any) => i.tipoRelacao === "SEDE")?.instituicao?.nome
+
+    // Buscar produções científicas vinculadas aos membros do grupo de pesquisa
+    if (apiGrupoId && membros.length > 0) {
+        try {
+            publicacoes = await getProducoesDoGrupo(apiGrupoId, membros)
+        } catch (error) {
+            console.error("Erro ao carregar produções do grupo:", error)
+        }
+    }
 
     return (
         <div
@@ -216,18 +219,11 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
 
                             case "publicacoes":
                                 return has("F04") ? (
-                                    <section key="publicacoes" id="publicacoes" className="space-y-3">
-                                        <h2 className="text-xl font-bold text-foreground">Publicações Relevantes</h2>
-                                        {publicacoes.length > 0 ? (
-                                            <div className="space-y-3">
-                                                {publicacoes.map((pub, idx) => (
-                                                    <PublicationCard key={pub.id || idx} producao={pub} />
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm italic text-muted-foreground">Nenhuma produção científica encontrada.</p>
-                                        )}
-                                    </section>
+                                    <PublicationsSection
+                                        key="publicacoes"
+                                        publicacoes={publicacoes}
+                                        linhasPesquisa={linhas}
+                                    />
                                 ) : null
 
                             case "noticias":

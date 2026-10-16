@@ -11,8 +11,10 @@ export interface ProducaoDetalhe {
     issn        : string | null;
     qualis      : string | null;
     resumo      : string | null;
-    criadoEm    : string;
-    atualizadoEm: string;
+    criadoEm?   : string;
+    atualizadoEm?: string;
+    autorPrincipal?: string;
+    autoresDoGrupo?: string[];
 }
 
 export interface Producao {

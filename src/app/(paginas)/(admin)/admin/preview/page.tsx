@@ -12,7 +12,7 @@ import SearchSection from "@/components/search/SearchSection"
 import Mission from "@/components/researchGroup/Mission"
 import ResearchLine from "@/components/researchGroup/ResearchLine"
 import ResearcherCard from "@/components/researcher/ResearcherCard"
-import PublicationCard from "@/components/publication/PublicationCard"
+import PublicationsSection from "@/components/publication/PublicationsSection"
 import About from "@/components/researchGroup/About"
 import SocialLinks from "@/components/researchGroup/SocialLinks"
 import NewsSection from "@/components/news/NewsSection"
@@ -21,7 +21,7 @@ import EventsSection from "@/components/event/EventsSection"
 // Camada de Serviço
 import { ProducaoDetalhe } from "@/core/producao"
 import { Pesquisador } from "@/core/researcher"
-import { getGrupoPesquisaPorId, getProducoesPorGrupo } from "@/service/researchGroupService"
+import { getGrupoPesquisaPorId, getProducoesDoGrupo } from "@/service/researchGroupService"
 import { prisma } from "@/lib/prisma"
 import { PublicationControl } from "@/components/admin/PublicationControl"
 
@@ -88,14 +88,8 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
     let publicacoes: ProducaoDetalhe[] = []
 
     try {
-        const [{ data: grupoData }, producoesRes] = await Promise.all([
-            getGrupoPesquisaPorId(grupoId),
-            getProducoesPorGrupo({ grupoId, page: 1, size: 10 }).catch(() => ({ data: [] })),
-        ])
+        const { data: grupoData } = await getGrupoPesquisaPorId(grupoId)
         grupo = grupoData
-        publicacoes = Array.isArray(producoesRes.data)
-            ? producoesRes.data
-            : (producoesRes.data as any)?.data || []
     } catch (error) {
         console.error("Erro ao carregar dados do grupo na API:", error)
     }
@@ -109,6 +103,15 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
 
     const linhas = (grupo?.linhasPesquisa || []).filter(Boolean)
     const instituicaoSedeNome = grupo?.instituicoes?.find((i: any) => i.tipoRelacao === "SEDE")?.instituicao?.nome
+
+    // Buscar produções científicas vinculadas aos membros do grupo de pesquisa
+    if (grupo && membros.length > 0) {
+        try {
+            publicacoes = await getProducoesDoGrupo(grupoId, membros)
+        } catch (error) {
+            console.error("Erro ao carregar produções do grupo:", error)
+        }
+    }
 
     // Features com componentes visuais prontos
     const implementedFeatureIds = [
@@ -271,20 +274,11 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
 
                                 case "publicacoes":
                                     return has("F04") ? (
-                                        <section key="publicacoes" id="publicacoes" className="space-y-3">
-                                            <h2 className="text-xl font-bold text-foreground">Produções Científicas</h2>
-                                            {publicacoes.length > 0 ? (
-                                                <div className="space-y-3">
-                                                    {publicacoes.map((pub) => (
-                                                        <PublicationCard key={pub.id} producao={pub} />
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="rounded-2xl border border-border bg-card p-6 text-sm italic text-muted-foreground shadow-xs">
-                                                    Nenhuma produção científica indexada para este grupo na API.
-                                                </div>
-                                            )}
-                                        </section>
+                                        <PublicationsSection
+                                            key="publicacoes"
+                                            publicacoes={publicacoes}
+                                            linhasPesquisa={linhas}
+                                        />
                                     ) : null
 
                                 case "noticias":
