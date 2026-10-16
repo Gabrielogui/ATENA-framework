@@ -1,17 +1,19 @@
 'use client'
 
 import { Pesquisador } from "@/core/researcher"
+import { ProducaoDetalhe } from "@/core/producao"
 import ResearcherCard from "@/components/researcher/ResearcherCard"
+import PublicationCard from "@/components/publication/PublicationCard"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Search, Sparkles, Loader2, X, AlertCircle } from "lucide-react"
+import { Search, Sparkles, Loader2, X, AlertCircle, Users, BookOpen } from "lucide-react"
 
 interface SearchResultProps {
-    results: Pesquisador[]
+    pesquisadores?: Pesquisador[]
+    producoes?: ProducaoDetalhe[]
     loading?: boolean
     query: string
     searchType: "lexica" | "semantica"
-    total?: number
     error?: string
     onClear?: () => void
     hasDetails?: boolean
@@ -19,24 +21,27 @@ interface SearchResultProps {
 }
 
 export default function SearchResult({
-    results,
+    pesquisadores = [],
+    producoes = [],
     loading = false,
     query,
     searchType,
-    total,
     error,
     onClear,
     hasDetails,
     instituicaoNome,
 }: SearchResultProps) {
-    if (!query && !loading && results.length === 0) {
+    if (!query && !loading && pesquisadores.length === 0 && producoes.length === 0) {
         return null
     }
 
     const isSemantica = searchType === "semantica"
+    const totalPesquisadores = pesquisadores.length
+    const totalProducoes = producoes.length
+    const totalGeral = totalPesquisadores + totalProducoes
 
     return (
-        <section className="space-y-4 rounded-3xl border border-border bg-card p-6 shadow-xs transition-all">
+        <section className="space-y-6 rounded-3xl border border-border bg-card p-6 shadow-xs transition-all">
             {/* Cabeçalho do Resultado */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                 <div className="flex items-center gap-3">
@@ -58,9 +63,14 @@ export default function SearchResult({
                             </Badge>
                         </div>
                         {query && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                                 Pesquisa realizada por: <strong className="text-foreground">"{query}"</strong>
-                                {!loading && ` (${results.length} ${results.length === 1 ? "pesquisador encontrado" : "pesquisadores encontrados"})`}
+                                {!loading && (
+                                    <span>
+                                        {" "}• {totalPesquisadores} {totalPesquisadores === 1 ? "pesquisador" : "pesquisadores"}
+                                        {" "}e {totalProducoes} {totalProducoes === 1 ? "produção" : "produções"}
+                                    </span>
+                                )}
                             </p>
                         )}
                     </div>
@@ -85,7 +95,7 @@ export default function SearchResult({
                 <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                     <Loader2 className="h-7 w-7 animate-spin text-primary mb-2" />
                     <span className="text-xs font-semibold">
-                        Consultando pesquisadores na API ({isSemantica ? "Processamento Semântico" : "Busca Léxica"})...
+                        Consultando pesquisadores e produções científicas na API ({isSemantica ? "Processamento Semântico" : "Busca Léxica"})...
                     </span>
                 </div>
             )}
@@ -99,30 +109,51 @@ export default function SearchResult({
             )}
 
             {/* Nenhum Resultado */}
-            {!loading && !error && results.length === 0 && (
+            {!loading && !error && totalGeral === 0 && (
                 <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-8 text-center">
                     <p className="text-sm font-semibold text-foreground">
-                        Nenhum pesquisador encontrado para "{query}".
+                        Nenhum pesquisador ou produção científica encontrada para "{query}".
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                         {isSemantica
-                            ? "Tente descrever a especialidade, área de atuação ou termos relacionados de outra forma."
-                            : "Verifique a grafia ou tente buscar por parte do nome."}
+                            ? "Tente descrever a especialidade, tema de pesquisa ou termos relacionados com outras palavras."
+                            : "Verifique a grafia ou tente buscar por termos mais genéricos."}
                     </p>
                 </div>
             )}
 
-            {/* Grid dos Cards de Pesquisadores */}
-            {!loading && results.length > 0 && (
-                <div className="flex flex-wrap gap-4 pt-2">
-                    {results.map((pesquisador) => (
-                        <ResearcherCard
-                            key={pesquisador.id}
-                            pesquisador={pesquisador}
-                            hasDetails={hasDetails}
-                            instituicaoNome={instituicaoNome}
-                        />
-                    ))}
+            {/* 1. SEÇÃO DE PESQUISADORES ENCONTRADOS */}
+            {!loading && totalPesquisadores > 0 && (
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+                        <Users className="h-4 w-4 text-primary" />
+                        <h4>Pesquisadores ({totalPesquisadores})</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                        {pesquisadores.map((pesquisador) => (
+                            <ResearcherCard
+                                key={pesquisador.id}
+                                pesquisador={pesquisador}
+                                hasDetails={hasDetails}
+                                instituicaoNome={instituicaoNome}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* 2. SEÇÃO DE PRODUÇÕES CIENTÍFICAS ENCONTRADAS */}
+            {!loading && totalProducoes > 0 && (
+                <div className="space-y-3 pt-2">
+                    <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        <h4>Produções Científicas ({totalProducoes})</h4>
+                    </div>
+                    <div className="space-y-3">
+                        {producoes.map((pub, idx) => (
+                            <PublicationCard key={pub.id || `${pub.titulo}-${idx}`} producao={pub} />
+                        ))}
+                    </div>
                 </div>
             )}
         </section>

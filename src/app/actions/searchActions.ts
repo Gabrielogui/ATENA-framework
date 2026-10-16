@@ -3,8 +3,9 @@
 import { api } from "@/service/axios"
 import { getGrupoPesquisaPorId } from "@/service/researchGroupService"
 import { Pesquisador } from "@/core/researcher"
+import { ProducaoDetalhe } from "@/core/producao"
 
-interface BuscarPesquisadoresParams {
+interface BuscarParams {
     grupoId?: string
     query: string
     searchType: "lexica" | "semantica"
@@ -15,6 +16,9 @@ interface BuscarPesquisadoresParams {
 export interface SearchResultResponse {
     success: boolean
     pesquisadores: Pesquisador[]
+    producoes: ProducaoDetalhe[]
+    totalPesquisadores: number
+    totalProducoes: number
     total: number
     searchType: "lexica" | "semantica"
     query: string
@@ -22,8 +26,8 @@ export interface SearchResultResponse {
 }
 
 /**
- * Server Action que executa a busca léxica ou semântica de pesquisadores na API remota,
- * contornando restrições de CORS e aplicando o filtro por grupo de pesquisa.
+ * Server Action que executa a busca unificada (pesquisadores e produções científicas),
+ * seja léxica ou semântica, na API remota, aplicando o filtro do grupo de pesquisa.
  */
 export async function buscarPesquisadoresAction({
     grupoId,
@@ -31,13 +35,16 @@ export async function buscarPesquisadoresAction({
     searchType,
     page = 1,
     size = 30,
-}: BuscarPesquisadoresParams): Promise<SearchResultResponse> {
+}: BuscarParams): Promise<SearchResultResponse> {
     try {
         const termo = query.trim()
         if (!termo) {
             return {
                 success: true,
                 pesquisadores: [],
+                producoes: [],
+                totalPesquisadores: 0,
+                totalProducoes: 0,
                 total: 0,
                 searchType,
                 query: "",
@@ -45,71 +52,118 @@ export async function buscarPesquisadoresAction({
         }
 
         // ==========================================
-        // 1. BUSCA LÉXICA (/pesquisadores)
+        // 1. BUSCA LÉXICA (/pesquisadores e /producoes)
         // ==========================================
         if (searchType === "lexica") {
-            const params: Record<string, any> = {
+            const paramsPesq: Record<string, any> = {
                 nome: termo,
                 page,
                 size,
             }
-
             if (grupoId) {
-                params.grupoPesquisaId = grupoId
+                paramsPesq.grupoPesquisaId = grupoId
             }
 
-            const { data } = await api.get("/pesquisadores", { params })
-            const rawList = Array.isArray(data) ? data : data?.data || []
-            const total = data?.meta?.totalItems ?? rawList.length
+            const paramsProd: Record<string, any> = {
+                titulo: termo,
+                page,
+                size,
+            }
+            if (grupoId) {
+                paramsProd.grupoId = grupoId
+            }
+
+            const [resPesq, resProd] = await Promise.all([
+                api.get("/pesquisadores", { params: paramsPesq }).catch(() => ({ data: { data: [] } })),
+                api.get("/producoes", { params: paramsProd }).catch(() => ({ data: { data: [] } })),
+            ])
+
+            const rawPesquisadores = Array.isArray(resPesq.data)
+                ? resPesq.data
+                : resPesq.data?.data || []
+
+            const rawProducoes = Array.isArray(resProd.data)
+                ? resProd.data
+                : resProd.data?.data || []
 
             return {
                 success: true,
-                pesquisadores: rawList,
-                total,
+                pesquisadores: rawPesquisadores,
+                producoes: rawProducoes,
+                totalPesquisadores: rawPesquisadores.length,
+                totalProducoes: rawProducoes.length,
+                total: rawPesquisadores.length + rawProducoes.length,
                 searchType: "lexica",
                 query: termo,
             }
         }
 
         // ==========================================
-        // 2. BUSCA SEMÂNTICA (/pesquisadores/busca-semantica)
+        // 2. BUSCA SEMÂNTICA (/pesquisadores/busca-semantica e /producoes/busca-semantica)
         // ==========================================
         if (searchType === "semantica") {
-            const { data } = await api.get("/pesquisadores/busca-semantica", {
-                params: {
-                    q: termo,
-                    page,
-                    size,
-                },
-            })
+            const [resPesq, resProd, resGrupo] = await Promise.all([
+                api.get("/pesquisadores/busca-semantica", {
+                    params: { q: termo, page, size: 50 },
+                }).catch(() => ({ data: { data: [] } })),
+                api.get("/producoes/busca-semantica", {
+                    params: { q: termo, page, size: 50 },
+                }).catch(() => ({ data: { data: [] } })),
+                grupoId
+                    ? getGrupoPesquisaPorId(grupoId).catch(() => ({ data: null }))
+                    : Promise.resolve({ data: null }),
+            ])
 
-            let rawList: Pesquisador[] = Array.isArray(data) ? data : data?.data || []
+            let rawPesquisadores: Pesquisador[] = Array.isArray(resPesq.data)
+                ? resPesq.data
+                : resPesq.data?.data || []
 
-            // Filtragem inteligente pelo grupo se grupoId foi fornecido
-            if (grupoId && rawList.length > 0) {
-                try {
-                    const { data: grupoData } = await getGrupoPesquisaPorId(grupoId)
-                    const grupoMembros = grupoData?.membros || []
-                    const membroIds = new Set(
-                        grupoMembros.map((m: any) => m.pesquisador?.id || m.id).filter(Boolean)
-                    )
+            let rawProducoes: any[] = Array.isArray(resProd.data)
+                ? resProd.data
+                : resProd.data?.data || []
 
-                    // Filtra os pesquisadores retornados que pertencem a este grupo de pesquisa
-                    const membrosDoGrupo = rawList.filter((p) => membroIds.has(p.id))
+            // Filtragem inteligente cruzando com membros do grupo
+            const grupoData = resGrupo?.data
+            if (grupoData?.membros && grupoData.membros.length > 0) {
+                const membroIds = new Set<string>(
+                    grupoData.membros
+                        .map((m: any) => m.pesquisador?.id || m.id)
+                        .filter(Boolean)
+                )
 
-                    // Se encontrou membros do grupo na resposta semântica, prioriza e exibe os membros do grupo
-                    if (membrosDoGrupo.length > 0) {
-                        rawList = membrosDoGrupo
-                    }
-                } catch (err) {
-                    console.warn("Não foi possível filtrar membros do grupo na busca semântica:", err)
+                // 1. Filtrar pesquisadores do grupo
+                const pesquisadoresDoGrupo = rawPesquisadores.filter((p) => membroIds.has(p.id))
+                if (pesquisadoresDoGrupo.length > 0) {
+                    rawPesquisadores = pesquisadoresDoGrupo
+                }
+
+                // 2. Filtrar produções científicas cujos autores pertençam ao grupo
+                const producoesDoGrupo = rawProducoes
+                    .filter((item) => item.autores?.some((a: any) => membroIds.has(a.pesquisadorId)))
+                    .map((item) => {
+                        const autoresMembros = (item.autores || [])
+                            .filter((a: any) => membroIds.has(a.pesquisadorId))
+                            .map((a: any) => a.pesquisador?.nome || a.nome)
+                            .filter(Boolean)
+
+                        return {
+                            ...item,
+                            autoresDoGrupo: autoresMembros.length > 0 ? autoresMembros : undefined,
+                        }
+                    })
+
+                if (producoesDoGrupo.length > 0) {
+                    rawProducoes = producoesDoGrupo
                 }
             }
 
             return {
                 success: true,
-                pesquisadores: rawList,
-                total: rawList.length,
+                pesquisadores: rawPesquisadores,
+                producoes: rawProducoes,
+                totalPesquisadores: rawPesquisadores.length,
+                totalProducoes: rawProducoes.length,
+                total: rawPesquisadores.length + rawProducoes.length,
                 searchType: "semantica",
                 query: termo,
             }
@@ -118,20 +172,26 @@ export async function buscarPesquisadoresAction({
         return {
             success: false,
             pesquisadores: [],
+            producoes: [],
+            totalPesquisadores: 0,
+            totalProducoes: 0,
             total: 0,
             searchType,
             query: termo,
             error: "Tipo de busca inválido.",
         }
     } catch (error: any) {
-        console.error("Erro ao executar busca de pesquisadores:", error?.message || error)
+        console.error("Erro ao executar busca unificada:", error?.message || error)
         return {
             success: false,
             pesquisadores: [],
+            producoes: [],
+            totalPesquisadores: 0,
+            totalProducoes: 0,
             total: 0,
             searchType,
             query,
-            error: "Falha ao consultar pesquisadores na API acadêmica.",
+            error: "Falha ao consultar a API de busca acadêmica.",
         }
     }
 }

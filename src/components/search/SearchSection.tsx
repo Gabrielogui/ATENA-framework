@@ -4,6 +4,7 @@ import { useState } from "react"
 import SearchBar from "@/components/SearchBar"
 import SearchResult from "./SearchResult"
 import { Pesquisador } from "@/core/researcher"
+import { ProducaoDetalhe } from "@/core/producao"
 import { buscarPesquisadoresAction } from "@/app/actions/searchActions"
 
 interface SearchSectionProps {
@@ -23,7 +24,8 @@ export default function SearchSection({
     hasDetails = false,
     instituicaoNome,
 }: SearchSectionProps) {
-    const [results, setResults] = useState<Pesquisador[]>([])
+    const [pesquisadores, setPesquisadores] = useState<Pesquisador[]>([])
+    const [producoes, setProducoes] = useState<ProducaoDetalhe[]>([])
     const [loading, setLoading] = useState(false)
     const [currentQuery, setCurrentQuery] = useState("")
     const [currentType, setCurrentType] = useState<"lexica" | "semantica">("lexica")
@@ -45,14 +47,17 @@ export default function SearchSection({
             })
 
             if (res.success) {
-                setResults(res.pesquisadores)
+                setPesquisadores(res.pesquisadores || [])
+                setProducoes(res.producoes || [])
             } else {
-                setError(res.error || "Erro ao consultar pesquisadores.")
-                setResults([])
+                setError(res.error || "Erro ao consultar pesquisadores e produções.")
+                setPesquisadores([])
+                setProducoes([])
             }
         } catch {
             setError("Falha ao comunicar com o servidor de busca.")
-            setResults([])
+            setPesquisadores([])
+            setProducoes([])
         } finally {
             setLoading(false)
         }
@@ -60,7 +65,8 @@ export default function SearchSection({
 
     const handleClear = () => {
         setHasSearched(false)
-        setResults([])
+        setPesquisadores([])
+        setProducoes([])
         setCurrentQuery("")
         setError(undefined)
     }
@@ -82,7 +88,8 @@ export default function SearchSection({
             {/* Componente de Resultado da Busca (F08) */}
             {hasResultado && hasSearched && (
                 <SearchResult
-                    results={results}
+                    pesquisadores={pesquisadores}
+                    producoes={producoes}
                     loading={loading}
                     query={currentQuery}
                     searchType={currentType}

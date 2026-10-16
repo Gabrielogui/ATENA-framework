@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { ProducaoDetalhe } from "@/core/producao";
 import PublicationCard from "./PublicationCard";
-import { BookOpen, Search, ChevronLeft, ChevronRight, X, Filter } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 
 interface PublicationsSectionProps {
     publicacoes: ProducaoDetalhe[];
@@ -16,7 +16,6 @@ export default function PublicationsSection({
     linhasPesquisa = [],
     pageSize = 6,
 }: PublicationsSectionProps) {
-    const [searchTerm, setSearchTerm] = useState("");
     const [selectedTipo, setSelectedTipo] = useState<string>("TODOS");
     const [selectedLinha, setSelectedLinha] = useState<string>("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -30,22 +29,9 @@ export default function PublicationsSection({
         return Array.from(set);
     }, [publicacoes]);
 
-    // Filtragem em tempo real
+    // Filtragem por Tipo e Linha de Pesquisa
     const publicacoesFiltradas = useMemo(() => {
         return publicacoes.filter((pub) => {
-            // Filtro por termo digitado (título, autor, ano, veículo)
-            if (searchTerm.trim()) {
-                const term = searchTerm.toLowerCase();
-                const matchTitulo = pub.titulo?.toLowerCase().includes(term);
-                const matchAno = pub.ano?.toString().includes(term);
-                const matchVeiculo = pub.veiculo?.toLowerCase().includes(term);
-                const matchAutor = pub.autoresDoGrupo?.some((a) => a.toLowerCase().includes(term)) ||
-                    pub.autorPrincipal?.toLowerCase().includes(term);
-                if (!matchTitulo && !matchAno && !matchVeiculo && !matchAutor) {
-                    return false;
-                }
-            }
-
             // Filtro por tipo
             if (selectedTipo !== "TODOS" && pub.tipo !== selectedTipo) {
                 return false;
@@ -54,7 +40,6 @@ export default function PublicationsSection({
             // Filtro por linha de pesquisa (match por palavras-chave do título da linha)
             if (selectedLinha) {
                 const linhaTerm = selectedLinha.toLowerCase();
-                // Separa palavras relevantes da linha (tamanho > 3)
                 const keywords = linhaTerm
                     .split(/\s+/)
                     .map((w) => w.replace(/[^\w\u00C0-\u00FF]/g, ""))
@@ -69,7 +54,7 @@ export default function PublicationsSection({
 
             return true;
         });
-    }, [publicacoes, searchTerm, selectedTipo, selectedLinha]);
+    }, [publicacoes, selectedTipo, selectedLinha]);
 
     // Cálculo da paginação
     const totalItems = publicacoesFiltradas.length;
@@ -79,11 +64,6 @@ export default function PublicationsSection({
     const startIndex = (safeCurrentPage - 1) * pageSize;
     const endIndex = Math.min(startIndex + pageSize, totalItems);
     const paginatedItems = publicacoesFiltradas.slice(startIndex, endIndex);
-
-    const handleSearchChange = (val: string) => {
-        setSearchTerm(val);
-        setCurrentPage(1);
-    };
 
     const handleTipoChange = (tipo: string) => {
         setSelectedTipo(tipo);
@@ -96,13 +76,12 @@ export default function PublicationsSection({
     };
 
     const limparFiltros = () => {
-        setSearchTerm("");
         setSelectedTipo("TODOS");
         setSelectedLinha("");
         setCurrentPage(1);
     };
 
-    const temFiltroAtivo = Boolean(searchTerm || selectedTipo !== "TODOS" || selectedLinha);
+    const temFiltroAtivo = Boolean(selectedTipo !== "TODOS" || selectedLinha);
 
     return (
         <section id="publicacoes" className="space-y-4">
@@ -130,70 +109,48 @@ export default function PublicationsSection({
                 )}
             </div>
 
-            {/* Barra de Filtros e Busca Rápida (só exibe se houver publicações totais) */}
-            {publicacoes.length > 0 && (
+            {/* Barra de Filtros (Categorias e Linhas de Pesquisa) */}
+            {publicacoes.length > 0 && (tiposDisponiveis.length > 1 || linhasPesquisa.length > 0) && (
                 <div className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-xs">
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        {/* Campo de Busca */}
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => handleSearchChange(e.target.value)}
-                                placeholder="Buscar por título, autor ou ano..."
-                                className="w-full pl-10 pr-9 py-2 rounded-xl border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                            />
-                            {searchTerm && (
-                                <button
-                                    onClick={() => handleSearchChange("")}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                    title="Limpar busca"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            )}
+                    {/* Filtro por Tipo */}
+                    {tiposDisponiveis.length > 1 && (
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                            <span className="text-xs font-semibold text-muted-foreground mr-1">Tipo:</span>
+                            <button
+                                onClick={() => handleTipoChange("TODOS")}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
+                                    selectedTipo === "TODOS"
+                                        ? "bg-primary text-primary-foreground shadow-xs"
+                                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                }`}
+                            >
+                                Todos ({publicacoes.length})
+                            </button>
+                            {tiposDisponiveis.map((tipo) => {
+                                const count = publicacoes.filter((p) => p.tipo === tipo).length;
+                                const label = tipo === "LIVROCAPITULO" ? "Capítulo" : tipo.toLowerCase();
+                                return (
+                                    <button
+                                        key={tipo}
+                                        onClick={() => handleTipoChange(tipo)}
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-medium capitalize transition-colors ${
+                                            selectedTipo === tipo
+                                                ? "bg-primary text-primary-foreground shadow-xs"
+                                                : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                        }`}
+                                    >
+                                        {label} ({count})
+                                    </button>
+                                );
+                            })}
                         </div>
+                    )}
 
-                        {/* Filtro por Tipo */}
-                        {tiposDisponiveis.length > 1 && (
-                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                                <button
-                                    onClick={() => handleTipoChange("TODOS")}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${
-                                        selectedTipo === "TODOS"
-                                            ? "bg-primary text-primary-foreground shadow-xs"
-                                            : "bg-muted text-muted-foreground hover:bg-muted/80"
-                                    }`}
-                                >
-                                    Todos ({publicacoes.length})
-                                </button>
-                                {tiposDisponiveis.map((tipo) => {
-                                    const count = publicacoes.filter((p) => p.tipo === tipo).length;
-                                    const label = tipo === "LIVROCAPITULO" ? "Capítulo" : tipo.toLowerCase();
-                                    return (
-                                        <button
-                                            key={tipo}
-                                            onClick={() => handleTipoChange(tipo)}
-                                            className={`px-3 py-1.5 rounded-xl text-xs font-medium capitalize transition-colors ${
-                                                selectedTipo === tipo
-                                                    ? "bg-primary text-primary-foreground shadow-xs"
-                                                    : "bg-muted text-muted-foreground hover:bg-muted/80"
-                                            }`}
-                                        >
-                                            {label} ({count})
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Filtro por Linhas de Pesquisa (se houver) */}
+                    {/* Filtro por Linhas de Pesquisa */}
                     {linhasPesquisa.length > 0 && (
                         <div className="pt-2 border-t border-border flex flex-wrap items-center gap-2">
                             <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                                <Filter className="w-3 h-3" /> Linhas:
+                                <Filter className="w-3 h-3" /> Linhas de Pesquisa:
                             </span>
                             {linhasPesquisa.map((l, i) => {
                                 const nome = l.titulo || l.nome || `Linha ${i + 1}`;
@@ -242,13 +199,13 @@ export default function PublicationsSection({
                     ) : (
                         <div className="space-y-2">
                             <p className="text-sm font-medium text-foreground">
-                                Nenhuma publicação encontrada para os filtros aplicados.
+                                Nenhuma publicação encontrada para os filtros selecionados.
                             </p>
                             <button
                                 onClick={limparFiltros}
                                 className="text-xs text-primary font-semibold hover:underline"
                             >
-                                Limpar filtros de busca
+                                Limpar filtros
                             </button>
                         </div>
                     )}
@@ -272,7 +229,7 @@ export default function PublicationsSection({
                             <span>Anterior</span>
                         </button>
 
-                        {/* Números das páginas com limite de visualização */}
+                        {/* Números das páginas */}
                         <div className="flex items-center gap-1">
                             {Array.from({ length: totalPages }, (_, i) => i + 1)
                                 .filter((page) => {
