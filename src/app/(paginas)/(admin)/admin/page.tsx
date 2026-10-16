@@ -137,10 +137,12 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
                             <PortalCustomizerModal
                                 grupoId={grupo.id}
                                 grupoNome={grupo.nome}
+                                hasMissao={grupo.featuresSelecionadas.length === 0 || grupo.featuresSelecionadas.includes("F09")}
                                 initialData={{
                                     corPrimaria: grupo.corPrimaria || "#2563eb",
                                     corSecundaria: grupo.corSecundaria || "#0284c7",
                                     sobre: grupo.sobre || "",
+                                    missao: grupo.missao || "",
                                     logoUrl: grupo.logoUrl || "",
                                     redesSociais: (grupo.redesSociais as any) || {},
                                     noticias: grupo.noticias.map((n) => ({

@@ -5,9 +5,16 @@ import Link from "next/link";
 interface SidebarProps {
     grupo?: ResearchGroup | null;
     logoUrl?: string | null;
+    hasEndereco?: boolean;
+    hasContato?: boolean;
 }
 
-export default function Sidebar({ grupo, logoUrl }: SidebarProps) {
+export default function Sidebar({
+    grupo,
+    logoUrl,
+    hasEndereco = true,
+    hasContato = true,
+}: SidebarProps) {
     const instituicaoSede = grupo?.instituicoes?.find((i) => i.tipoRelacao === 'SEDE')?.instituicao;
 
     return (
@@ -87,20 +94,22 @@ export default function Sidebar({ grupo, logoUrl }: SidebarProps) {
                     </p>
                 </div>
 
-                <div className="space-y-2 px-2 text-xs font-semibold text-gray-400">
-                    {grupo?.cidade && (
-                        <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-rose-400 fill-rose-50" />
-                            <span>{grupo.logradouro ?? ""}, {grupo.cidade}/{grupo.uf}</span>
-                        </div>
-                    )}
-                    {grupo?.email && (
-                        <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-purple-400 fill-purple-50" />
-                            <span>{grupo.email}</span>
-                        </div>
-                    )}
-                </div>
+                {(hasEndereco || hasContato) && (
+                    <div className="space-y-2 px-2 text-xs font-semibold text-gray-400">
+                        {hasEndereco && grupo?.cidade && (
+                            <div className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4 text-rose-400 fill-rose-50" />
+                                <span>{grupo.logradouro ?? ""}, {grupo.cidade}/{grupo.uf}</span>
+                            </div>
+                        )}
+                        {hasContato && grupo?.email && (
+                            <div className="flex items-center gap-2">
+                                <Mail className="w-4 h-4 text-purple-400 fill-purple-50" />
+                                <span>{grupo.email}</span>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </aside>
     );

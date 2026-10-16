@@ -1,13 +1,23 @@
 interface MissionProps {
-    repercussao: string
+    missao?: string | null;
+    repercussao?: string | null;
 }
 
-export default function Mission ({ repercussao }: MissionProps) {
-    return(
-        <div className="flex flex-col gap-4 items-start px-5 py-6 bg-blue-950 text-white border border-blue-600 rounded-md
-            w-50">
+export default function Mission ({ missao, repercussao }: MissionProps) {
+    const textoMissao = missao?.trim() || repercussao?.trim()
+
+    return (
+        <div className="flex flex-col gap-3 px-6 py-6 bg-blue-950 text-white border border-blue-600 rounded-2xl w-full max-w-3xl shadow-sm">
             <h3 className="text-2xl font-bold text-azul-vivido">Missão</h3>
-            <p className="line-clamp-5 text-justify">Lorem ipsum dolor sit amet consectetur, adipisicing elit. Consectetur porro cum ullam quam quod vel, impedit in. Ut reprehenderit aspernatur corporis error accusamus, beatae, ullam vero quasi exercitationem alias recusandae.</p>
+            {textoMissao ? (
+                <p className="text-sm md:text-base leading-relaxed text-slate-100 text-justify">
+                    {textoMissao}
+                </p>
+            ) : (
+                <p className="text-sm italic text-blue-200/80">
+                    Nenhuma missão cadastrada para este grupo de pesquisa.
+                </p>
+            )}
         </div>
     )
 }

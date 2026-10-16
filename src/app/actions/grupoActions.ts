@@ -200,6 +200,7 @@ export interface ConfiguracaoPortalInput {
     corPrimaria?: string
     corSecundaria?: string
     sobre?: string
+    missao?: string
     logoUrl?: string
     redesSociais?: {
         instagram?: string
@@ -229,7 +230,7 @@ export interface ConfiguracaoPortalInput {
 }
 
 /**
- * Salva as configurações personalizadas do portal do grupo (Cores, Sobre, Logo, Redes, Notícias e Eventos).
+ * Salva as configurações personalizadas do portal do grupo (Cores, Sobre, Missão, Logo, Redes, Notícias e Eventos).
  */
 export async function salvarConfiguracaoPortalAction(input: ConfiguracaoPortalInput) {
     try {
@@ -238,7 +239,7 @@ export async function salvarConfiguracaoPortalAction(input: ConfiguracaoPortalIn
             return { success: false, error: "Não autorizado. Faça login novamente." }
         }
 
-        const { grupoId, corPrimaria, corSecundaria, sobre, logoUrl, redesSociais, noticias, eventos, customSettings } = input
+        const { grupoId, corPrimaria, corSecundaria, sobre, missao, logoUrl, redesSociais, noticias, eventos, customSettings } = input
 
         if (!grupoId) {
             return { success: false, error: "ID do grupo não informado." }
@@ -252,6 +253,7 @@ export async function salvarConfiguracaoPortalAction(input: ConfiguracaoPortalIn
                     corPrimaria: corPrimaria || "#2563eb",
                     corSecundaria: corSecundaria || "#0284c7",
                     sobre: sobre ?? null,
+                    missao: missao ?? null,
                     logoUrl: logoUrl || null,
                     redesSociais: redesSociais ? (redesSociais as any) : undefined,
                     customSettings: customSettings ? (customSettings as any) : undefined,
@@ -342,6 +344,7 @@ export async function obterConfiguracaoPortalAction(grupoId: string) {
                 corPrimaria: grupo.corPrimaria || "#2563eb",
                 corSecundaria: grupo.corSecundaria || "#0284c7",
                 sobre: grupo.sobre || "",
+                missao: grupo.missao || "",
                 logoUrl: grupo.logoUrl || "",
                 redesSociais: (grupo.redesSociais as any) || {},
                 customSettings: (grupo.customSettings as any) || {},

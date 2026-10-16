@@ -185,7 +185,12 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                 <div className="mx-auto flex items-start gap-6 p-4">
                     {/* Sidebar (F01, F02, F11, F12, F13, F14) */}
                     {(has("F01") || has("F02") || has("F14")) && (
-                        <Sidebar grupo={grupo as any} logoUrl={grupoLocal?.logoUrl} />
+                        <Sidebar
+                            grupo={grupo as any}
+                            logoUrl={grupoLocal?.logoUrl}
+                            hasEndereco={has("F13")}
+                            hasContato={has("F12")}
+                        />
                     )}
 
                     {/* Área Central Reordenável com Base na Configuração SPL */}
@@ -241,7 +246,10 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                 case "missao":
                                     return has("F09") ? (
                                         <section key="missao" id="missao">
-                                            <Mission repercussao={grupo.repercussao} />
+                                            <Mission
+                                                repercussao={grupo.repercussao}
+                                                missao={grupoLocal?.missao}
+                                            />
                                         </section>
                                     ) : null
 

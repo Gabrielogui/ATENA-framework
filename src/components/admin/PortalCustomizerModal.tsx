@@ -18,6 +18,7 @@ import {
     SlidersHorizontal,
     ExternalLink,
     Sparkles,
+    Target,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -47,10 +48,12 @@ interface EventoForm {
 interface PortalCustomizerModalProps {
     grupoId: string
     grupoNome: string
+    hasMissao?: boolean
     initialData?: {
         corPrimaria?: string
         corSecundaria?: string
         sobre?: string
+        missao?: string
         logoUrl?: string
         redesSociais?: {
             instagram?: string
@@ -79,6 +82,7 @@ const PRESET_COLORS = [
 export function PortalCustomizerModal({
     grupoId,
     grupoNome,
+    hasMissao = true,
     initialData,
 }: PortalCustomizerModalProps) {
     const [isOpen, setIsOpen] = useState(false)
@@ -91,6 +95,7 @@ export function PortalCustomizerModal({
     const [corSecundaria, setCorSecundaria] = useState(initialData?.corSecundaria || "#0284c7")
     const [logoUrl, setLogoUrl] = useState(initialData?.logoUrl || "")
     const [sobre, setSobre] = useState(initialData?.sobre || "")
+    const [missao, setMissao] = useState(initialData?.missao || "")
 
     // Redes Sociais
     const [redesSociais, setRedesSociais] = useState({
@@ -163,6 +168,7 @@ export function PortalCustomizerModal({
                 corPrimaria,
                 corSecundaria,
                 sobre,
+                missao,
                 logoUrl,
                 redesSociais,
                 noticias,
@@ -251,6 +257,12 @@ export function PortalCustomizerModal({
                                         <Globe className="h-3.5 w-3.5" />
                                         Sobre o Grupo
                                     </TabsTrigger>
+                                    {hasMissao && (
+                                        <TabsTrigger value="missao" className="gap-1.5 text-xs">
+                                            <Target className="h-3.5 w-3.5" />
+                                            Missão
+                                        </TabsTrigger>
+                                    )}
                                     <TabsTrigger value="redes" className="gap-1.5 text-xs">
                                         <Share2 className="h-3.5 w-3.5" />
                                         Redes Sociais
@@ -451,6 +463,32 @@ export function PortalCustomizerModal({
                                         />
                                     </div>
                                 </TabsContent>
+
+                                {/* ABA: MISSÃO DO GRUPO */}
+                                {hasMissao && (
+                                    <TabsContent value="missao" className="space-y-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="missao" className="font-bold text-foreground text-sm flex items-center gap-2">
+                                                <Target className="h-4 w-4 text-primary" />
+                                                Declaração de Missão do Grupo
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                Defina ou personalize o texto institucional que será exibido no componente de Missão do portal gerado.
+                                            </p>
+                                            <textarea
+                                                id="missao"
+                                                rows={6}
+                                                value={missao}
+                                                onChange={(e) => setMissao(e.target.value)}
+                                                placeholder="Ex: Promover a pesquisa científica de excelência em Bioinformática e Biologia Computacional, formando recursos humanos qualificados e desenvolvendo soluções biotecnológicas inovadoras..."
+                                                className="w-full rounded-xl border border-border bg-card p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary leading-relaxed"
+                                            />
+                                            <p className="text-[11px] text-muted-foreground">
+                                                Caso deixado em branco e a API não possua repercussão cadastrada, o portal exibirá um aviso informando que nenhuma missão foi cadastrada.
+                                            </p>
+                                        </div>
+                                    </TabsContent>
+                                )}
 
                                 {/* ABA 3: REDES SOCIAIS */}
                                 <TabsContent value="redes" className="space-y-4">
