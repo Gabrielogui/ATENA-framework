@@ -10,7 +10,7 @@ import Sidebar from "@/components/SideBar"
 import SearchSection from "@/components/search/SearchSection"
 import Mission from "@/components/researchGroup/Mission"
 import ResearchLine from "@/components/researchGroup/ResearchLine"
-import ResearcherCard from "@/components/researcher/ResearcherCard"
+import ResearchersSection from "@/components/researcher/ResearchersSection"
 import PublicationsSection from "@/components/publication/PublicationsSection"
 import About from "@/components/researchGroup/About"
 import SocialLinks from "@/components/researchGroup/SocialLinks"
@@ -172,23 +172,12 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
 
                             case "membros":
                                 return has("F03") ? (
-                                    <section key="membros" id="membros" className="space-y-3">
-                                        <h2 className="text-xl font-bold text-foreground">Membros e Pesquisadores</h2>
-                                        {membros.length > 0 ? (
-                                            <div className="flex flex-wrap gap-4">
-                                                {membros.map((p) => (
-                                                    <ResearcherCard
-                                                        key={p.id}
-                                                        pesquisador={p}
-                                                        hasDetails={has("F18")}
-                                                        instituicaoNome={instituicaoSedeNome}
-                                                    />
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm italic text-muted-foreground">Nenhum membro cadastrado.</p>
-                                        )}
-                                    </section>
+                                    <ResearchersSection
+                                        key="membros"
+                                        membros={membros}
+                                        hasDetails={has("F18")}
+                                        instituicaoNome={instituicaoSedeNome}
+                                    />
                                 ) : null
 
                             case "missao":
