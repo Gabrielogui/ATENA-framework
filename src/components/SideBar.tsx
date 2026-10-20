@@ -1,5 +1,5 @@
 import { ResearchGroup } from "@/core/grupoPesquisa";
-import { Award, BookOpen, Database, FolderGit2, LayoutDashboard, Mail, MapPin, TrendingUp, Users } from "lucide-react";
+import { Award, BookOpen, Building2, Database, FolderGit2, LayoutDashboard, Mail, MapPin, TrendingUp, Users } from "lucide-react";
 import Link from "next/link";
 
 interface SidebarProps {
@@ -7,6 +7,7 @@ interface SidebarProps {
     logoUrl?: string | null;
     hasEndereco?: boolean;
     hasContato?: boolean;
+    hasParceiros?: boolean;
 }
 
 export default function Sidebar({
@@ -14,8 +15,10 @@ export default function Sidebar({
     logoUrl,
     hasEndereco = true,
     hasContato = true,
+    hasParceiros = true,
 }: SidebarProps) {
-    const instituicaoSede = grupo?.instituicoes?.find((i) => i.tipoRelacao === 'SEDE')?.instituicao;
+    const sedeItem = grupo?.instituicoes?.find((i: any) => (i.tipoRelacao || i.instituicao?.tipoRelacao) === 'SEDE');
+    const instituicaoSedeSigla = sedeItem?.sigla || (sedeItem as any)?.instituicao?.sigla || "UNEB";
 
     return (
         <aside className="w-72 h-[calc(100vh-2rem)] bg-white border border-gray-100 rounded-3xl p-6 flex flex-col justify-between shadow-sm my-4 ml-4 sticky top-4">
@@ -39,7 +42,7 @@ export default function Sidebar({
                             {grupo?.nome ?? "Laboratório de Pesquisa"}
                         </h2>
                         <span className="text-xs text-gray-400 font-medium">
-                            {instituicaoSede?.sigla ?? "UNEB"} • {grupo?.anoFormacao ?? "2026"}
+                            {instituicaoSedeSigla} • {grupo?.anoFormacao ?? "2026"}
                         </span>
                     </div>
                 </div>
@@ -77,6 +80,14 @@ export default function Sidebar({
                                 <span>Publicações</span>
                             </div>
                         </Link>
+                        {hasParceiros && (
+                            <Link href="#parceiros" className="flex items-center justify-between px-3 py-3 text-gray-500 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <Building2 className="w-5 h-5 text-gray-400" />
+                                    <span>Parceiros</span>
+                                </div>
+                            </Link>
+                        )}
                     </nav>
                 </div>
             </div>

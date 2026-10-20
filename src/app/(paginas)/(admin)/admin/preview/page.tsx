@@ -17,6 +17,7 @@ import About from "@/components/researchGroup/About"
 import SocialLinks from "@/components/researchGroup/SocialLinks"
 import NewsSection from "@/components/news/NewsSection"
 import EventsSection from "@/components/event/EventsSection"
+import PartnerInstitutions from "@/components/researchGroup/PartnerInstitutions"
 
 // Camada de Serviço
 import { ProducaoDetalhe } from "@/core/producao"
@@ -47,7 +48,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         .map((s) => s.trim())
         .filter(Boolean)
 
-    const defaultOrder = ["search", "sobre", "membros", "missao", "linhas", "publicacoes", "noticias", "eventos", "redes"]
+    const defaultOrder = ["search", "sobre", "membros", "missao", "linhas", "publicacoes", "noticias", "eventos", "redes", "parceiros"]
     const sectionOrder = Array.from(new Set([...customOrder, ...defaultOrder]))
 
     // Resolução do ID do grupo: searchParams -> session -> consulta no banco
@@ -94,7 +95,13 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         console.error("Erro ao carregar dados do grupo na API:", error)
     }
 
-    const has = (id: string) => selectedIds.includes(id)
+    const has = (id: string) => {
+        const feat = featureModel.find((f) => f.id === id)
+        if (feat && (feat.tipo === "obrigatorio" || feat.prioridade === "must") && (!feat.requer || feat.requer.length === 0)) {
+            return true
+        }
+        return selectedIds.includes(id)
+    }
 
     // Extração segura garantindo que apenas objetos válidos com ID fiquem no array
     const membros: Pesquisador[] = (grupo?.membros || [])
@@ -102,7 +109,8 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         .filter((p: any): p is Pesquisador => Boolean(p && p.id))
 
     const linhas = (grupo?.linhasPesquisa || []).filter(Boolean)
-    const instituicaoSedeNome = grupo?.instituicoes?.find((i: any) => i.tipoRelacao === "SEDE")?.instituicao?.nome
+    const sedeItem = grupo?.instituicoes?.find((i: any) => (i.tipoRelacao || i.instituicao?.tipoRelacao) === "SEDE")
+    const instituicaoSedeNome = sedeItem?.nome || (sedeItem as any)?.instituicao?.nome
 
     // Buscar produções científicas vinculadas aos membros do grupo de pesquisa
     if (grupo && membros.length > 0) {
@@ -118,7 +126,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         "F01", "F02", "F03", "F04", "F05",
         "F06", "F07", "F08", "F09", "F10",
         "F11", "F12", "F13", "F14", "F15",
-        "F17", "F18", "F19"
+        "F17", "F18", "F19", "F22"
     ]
 
     const pendingFeatures = selectedIds
@@ -193,6 +201,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                             logoUrl={grupoLocal?.logoUrl}
                             hasEndereco={has("F13")}
                             hasContato={has("F12")}
+                            hasParceiros={has("F22")}
                         />
                     )}
 
@@ -289,6 +298,14 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                         <section key="redes" id="redes">
                                             <SocialLinks redes={grupoLocal?.redesSociais as any} />
                                         </section>
+                                    ) : null
+
+                                case "parceiros":
+                                    return has("F22") ? (
+                                        <PartnerInstitutions
+                                            key="parceiros"
+                                            instituicoes={grupo?.instituicoes || []}
+                                        />
                                     ) : null
 
                                 default:

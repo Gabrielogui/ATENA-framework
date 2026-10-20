@@ -6,29 +6,40 @@ export interface Estado {
     sigla       : string;
     nome        : string;
     regiao      : string;
-    criadoEm    : string;
-    atualizadoEm: string;
+    criadoEm   ?: string;
+    atualizadoEm?: string;
 }
 
 export interface Instituicao {
     id          : string;
     nome        : string;
     sigla       : string;
-    estadoId    : string;
-    criadoEm    : string;
-    atualizadoEm: string;
-    estado     ?: Estado;
+    estadoId   ?: string;
+    criadoEm   ?: string;
+    atualizadoEm?: string;
+    estado     ?: Estado | null;
+}
+
+export interface UnidadeInstituicao {
+    nome: string;
+    uf? : string | null;
 }
 
 export interface InstituicaoGrupo {
-    grupoId      : string;
-    instituicaoId: string;
+    id?          : string;
+    nome?        : string;
+    sigla?       : string;
+    imageUrl?    : string | null;
     tipoRelacao  : 'SEDE' | 'PARCEIRA' | string;
-    unidade      : string | null;
-    unidadeUf    : string | null;
-    criadoEm     : string;
-    atualizadoEm : string;
-    instituicao  : Instituicao;
+    unidade?     : UnidadeInstituicao | string | null;
+    estado?      : Estado | null;
+    // Campos legados para compatibilidade
+    grupoId?     : string;
+    instituicaoId?: string;
+    unidadeUf?   : string | null;
+    criadoEm?    : string;
+    atualizadoEm?: string;
+    instituicao? : Instituicao;
 }
 
 export interface Area {

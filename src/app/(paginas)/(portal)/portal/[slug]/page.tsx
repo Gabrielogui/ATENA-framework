@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { prisma } from "@/lib/prisma"
 import { getGrupoPesquisaPorId, getProducoesDoGrupo } from "@/service/researchGroupService"
+import { featureModel } from "@/lib/feature-model"
 import { ProducaoDetalhe } from "@/core/producao"
 import { Pesquisador } from "@/core/researcher"
 
@@ -16,6 +17,7 @@ import About from "@/components/researchGroup/About"
 import SocialLinks from "@/components/researchGroup/SocialLinks"
 import NewsSection from "@/components/news/NewsSection"
 import EventsSection from "@/components/event/EventsSection"
+import PartnerInstitutions from "@/components/researchGroup/PartnerInstitutions"
 
 interface PortalPageProps {
     params: Promise<{ slug: string }>
@@ -68,9 +70,15 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
     }
 
     const selectedIds = grupoLocal.featuresSelecionadas || []
-    const has = (id: string) => selectedIds.includes(id)
+    const has = (id: string) => {
+        const feat = featureModel.find((f) => f.id === id)
+        if (feat && (feat.tipo === "obrigatorio" || feat.prioridade === "must") && (!feat.requer || feat.requer.length === 0)) {
+            return true
+        }
+        return selectedIds.includes(id)
+    }
 
-    const defaultOrder = ["search", "sobre", "membros", "missao", "linhas", "publicacoes", "noticias", "eventos", "redes"]
+    const defaultOrder = ["search", "sobre", "membros", "missao", "linhas", "publicacoes", "noticias", "eventos", "redes", "parceiros"]
     const sectionOrder = grupoLocal.ordemSecoes && grupoLocal.ordemSecoes.length > 0
         ? Array.from(new Set([...grupoLocal.ordemSecoes, ...defaultOrder]))
         : defaultOrder
@@ -107,7 +115,8 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
         .filter((p: any): p is Pesquisador => Boolean(p && p.id))
 
     const linhas = (grupo?.linhasPesquisa || []).filter(Boolean)
-    const instituicaoSedeNome = grupo?.instituicoes?.find((i: any) => i.tipoRelacao === "SEDE")?.instituicao?.nome
+    const sedeItem = grupo?.instituicoes?.find((i: any) => (i.tipoRelacao || i.instituicao?.tipoRelacao) === "SEDE")
+    const instituicaoSedeNome = sedeItem?.nome || (sedeItem as any)?.instituicao?.nome
 
     // Buscar produções científicas vinculadas aos membros do grupo de pesquisa
     if (apiGrupoId && membros.length > 0) {
@@ -138,6 +147,7 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
                         logoUrl={grupoLocal.logoUrl}
                         hasEndereco={has("F13")}
                         hasContato={has("F12")}
+                        hasParceiros={has("F22")}
                     />
                 )}
 
@@ -234,6 +244,14 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
                                     <section key="redes" id="redes">
                                         <SocialLinks redes={grupoLocal.redesSociais as any} />
                                     </section>
+                                ) : null
+
+                            case "parceiros":
+                                return has("F22") ? (
+                                    <PartnerInstitutions
+                                        key="parceiros"
+                                        instituicoes={grupo?.instituicoes || []}
+                                    />
                                 ) : null
 
                             default:

@@ -36,7 +36,10 @@ export function FeatureConfigurator({
     // Inicializa com as features salvas ou as obrigatórias raiz
     const [selectedIds, setSelectedIds] = useState<string[]>(() => {
         if (initialSelectedFeatures && initialSelectedFeatures.length > 0) {
-            return initialSelectedFeatures
+            const rootObligatoryIds = featureModel
+                .filter((f) => (f.tipo === "obrigatorio" || f.prioridade === "must") && (!f.requer || f.requer.length === 0))
+                .map((f) => f.id)
+            return Array.from(new Set([...initialSelectedFeatures, ...rootObligatoryIds]))
         }
         return featureModel
             .filter((f) => (f.tipo === "obrigatorio" || f.prioridade === "must") && (!f.requer || f.requer.length === 0))
@@ -46,7 +49,8 @@ export function FeatureConfigurator({
     // Ordem vertical dos componentes
     const [componentOrder, setComponentOrder] = useState<string[]>(() => {
         if (initialOrder && initialOrder.length > 0) {
-            return initialOrder
+            const allSectionIds = AVAILABLE_SECTIONS.map((s) => s.id)
+            return Array.from(new Set([...initialOrder, ...allSectionIds]))
         }
         return AVAILABLE_SECTIONS.map((s) => s.id)
     })

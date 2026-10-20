@@ -19,6 +19,7 @@ import {
     Newspaper,
     Calendar,
     Share2,
+    Building2,
 } from "lucide-react"
 
 export interface SectionMeta {
@@ -92,6 +93,13 @@ export const AVAILABLE_SECTIONS: SectionMeta[] = [
         description: "Canais oficiais de divulgação científica do grupo",
         icon: Share2,
         featureIds: ["F11"],
+    },
+    {
+        id: "parceiros",
+        title: "Instituições Parceiras",
+        description: "Instituições colaboradoras e parceiras de pesquisa",
+        icon: Building2,
+        featureIds: ["F22"],
     },
 ]
 

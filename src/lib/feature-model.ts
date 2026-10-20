@@ -111,7 +111,7 @@ export const featureModel: Feature[] = [
         id        : "F16",
         name      : "Gráficos de produções por ano",
         descricao : "Gráficos listando suas produções e quantidade por ano",
-        tipo      : "ou",
+        tipo      : "opcional",
         prioridade: "could",
         requer    : ["F04"],
     },
@@ -119,7 +119,7 @@ export const featureModel: Feature[] = [
         id        : "F17",
         name      : "Eventos",
         descricao : "Eventos do grupo",
-        tipo      : "ou",
+        tipo      : "opcional",
         prioridade: "could",
     },
     {
@@ -134,8 +134,9 @@ export const featureModel: Feature[] = [
         id        : "F19",
         name      : "Link para lattes",
         descricao : "Levar para o lattes do pesquisador",
-        tipo      : "opcional",
+        tipo      : "obrigatorio",
         prioridade: "must",
+        requer    : ["F03"],
     },
     {
         id        : "F20",
@@ -148,8 +149,15 @@ export const featureModel: Feature[] = [
         id        : "F21",
         name      : "Aréa restrita para membros",
         descricao : "Local para visualizar informações restritas para membros do grupo",
-        tipo      : "alternativa",
+        tipo      : "opcional",
         prioridade: "wont",
+    },
+    {
+        id        : "F22",
+        name      : "Instituições Parceiras",
+        descricao : "Listagem das instituições parceiras do grupo de pesquisa",
+        tipo      : "obrigatorio",
+        prioridade: "must",
     }
 ]
 
