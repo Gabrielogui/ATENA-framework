@@ -187,6 +187,7 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
                                         membros={membros}
                                         hasDetails={has("F18")}
                                         instituicaoNome={instituicaoSedeNome}
+                                        pageSize={4}
                                     />
                                 ) : null
 

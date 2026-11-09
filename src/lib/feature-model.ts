@@ -83,7 +83,7 @@ export const featureModel: Feature[] = [
         id        : "F12",
         name      : "Contato",
         descricao : "Informações de contato do grupo",
-        tipo      : "opcional",
+        tipo      : "obrigatorio",
         prioridade: "could",
     },
     {
