@@ -20,6 +20,7 @@ import {
     Calendar,
     Share2,
     Building2,
+    BarChart3,
 } from "lucide-react"
 
 export interface SectionMeta {
@@ -72,6 +73,13 @@ export const AVAILABLE_SECTIONS: SectionMeta[] = [
         description: "Artigos, periódicos, qualificações Qualis e publicações com DOI",
         icon: BookOpen,
         featureIds: ["F04"],
+    },
+    {
+        id: "graficos",
+        title: "Gráfico de Produções por Ano",
+        description: "Evolução temporal da quantidade de produções científicas com filtro por período",
+        icon: BarChart3,
+        featureIds: ["F16"],
     },
     {
         id: "noticias",

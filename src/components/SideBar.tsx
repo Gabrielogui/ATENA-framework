@@ -8,6 +8,7 @@ interface SidebarProps {
     hasEndereco?: boolean;
     hasContato?: boolean;
     hasParceiros?: boolean;
+    hasGraficos?: boolean;
 }
 
 export default function Sidebar({
@@ -16,6 +17,7 @@ export default function Sidebar({
     hasEndereco = true,
     hasContato = true,
     hasParceiros = true,
+    hasGraficos = false,
 }: SidebarProps) {
     const sedeItem = grupo?.instituicoes?.find((i: any) => (i.tipoRelacao || i.instituicao?.tipoRelacao) === 'SEDE');
     const instituicaoSedeSigla = sedeItem?.sigla || (sedeItem as any)?.instituicao?.sigla || "UNEB";
@@ -80,6 +82,14 @@ export default function Sidebar({
                                 <span>Publicações</span>
                             </div>
                         </Link>
+                        {hasGraficos && (
+                            <Link href="#graficos" className="flex items-center justify-between px-3 py-3 text-gray-500 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <TrendingUp className="w-5 h-5 text-gray-400" />
+                                    <span>Gráficos</span>
+                                </div>
+                            </Link>
+                        )}
                         {hasParceiros && (
                             <Link href="#parceiros" className="flex items-center justify-between px-3 py-3 text-gray-500 font-semibold rounded-xl hover:bg-gray-50 transition-colors">
                                 <div className="flex items-center gap-3">

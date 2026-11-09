@@ -13,6 +13,7 @@ import Mission from "@/components/researchGroup/Mission"
 import ResearchLine from "@/components/researchGroup/ResearchLine"
 import ResearchersSection from "@/components/researcher/ResearchersSection"
 import PublicationsSection from "@/components/publication/PublicationsSection"
+import PublicationsChart from "@/components/publication/PublicationsChart"
 import About from "@/components/researchGroup/About"
 import SocialLinks from "@/components/researchGroup/SocialLinks"
 import NewsSection from "@/components/news/NewsSection"
@@ -48,7 +49,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         .map((s) => s.trim())
         .filter(Boolean)
 
-    const defaultOrder = ["search", "sobre", "membros", "missao", "linhas", "publicacoes", "noticias", "eventos", "redes", "parceiros"]
+    const defaultOrder = ["search", "sobre", "membros", "missao", "linhas", "publicacoes", "graficos", "noticias", "eventos", "redes", "parceiros"]
     const sectionOrder = Array.from(new Set([...customOrder, ...defaultOrder]))
 
     // Resolução do ID do grupo: searchParams -> session -> consulta no banco
@@ -126,7 +127,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         "F01", "F02", "F03", "F04", "F05",
         "F06", "F07", "F08", "F09", "F10",
         "F11", "F12", "F13", "F14", "F15",
-        "F17", "F18", "F19", "F22"
+        "F16", "F17", "F18", "F19", "F22"
     ]
 
     const pendingFeatures = selectedIds
@@ -202,11 +203,12 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                             hasEndereco={has("F13")}
                             hasContato={has("F12")}
                             hasParceiros={has("F22")}
+                            hasGraficos={has("F16")}
                         />
                     )}
 
                     {/* Área Central Reordenável com Base na Configuração SPL */}
-                    <main className="flex flex-1 flex-col gap-8 py-4">
+                    <main className="flex min-w-0 flex-1 flex-col gap-8 py-4">
                         {sectionOrder.map((sectionId) => {
                             switch (sectionId) {
                                 case "search":
@@ -276,6 +278,14 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
                                             key="publicacoes"
                                             publicacoes={publicacoes}
                                             linhasPesquisa={linhas}
+                                        />
+                                    ) : null
+
+                                case "graficos":
+                                    return has("F16") ? (
+                                        <PublicationsChart
+                                            key="graficos"
+                                            publicacoes={publicacoes}
                                         />
                                     ) : null
 

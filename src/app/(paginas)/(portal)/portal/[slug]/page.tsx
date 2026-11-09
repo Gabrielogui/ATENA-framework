@@ -13,6 +13,7 @@ import Mission from "@/components/researchGroup/Mission"
 import ResearchLine from "@/components/researchGroup/ResearchLine"
 import ResearchersSection from "@/components/researcher/ResearchersSection"
 import PublicationsSection from "@/components/publication/PublicationsSection"
+import PublicationsChart from "@/components/publication/PublicationsChart"
 import About from "@/components/researchGroup/About"
 import SocialLinks from "@/components/researchGroup/SocialLinks"
 import NewsSection from "@/components/news/NewsSection"
@@ -78,7 +79,7 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
         return selectedIds.includes(id)
     }
 
-    const defaultOrder = ["search", "sobre", "membros", "missao", "linhas", "publicacoes", "noticias", "eventos", "redes", "parceiros"]
+    const defaultOrder = ["search", "sobre", "membros", "missao", "linhas", "publicacoes", "graficos", "noticias", "eventos", "redes", "parceiros"]
     const sectionOrder = grupoLocal.ordemSecoes && grupoLocal.ordemSecoes.length > 0
         ? Array.from(new Set([...grupoLocal.ordemSecoes, ...defaultOrder]))
         : defaultOrder
@@ -152,7 +153,7 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
                 )}
 
                 {/* Área Central Derivada com Base na Ordem e Features */}
-                <main className="flex flex-1 flex-col gap-8 py-2">
+                <main className="flex min-w-0 flex-1 flex-col gap-8 py-2">
                     {sectionOrder.map((sectionId) => {
                         switch (sectionId) {
                             case "search":
@@ -223,6 +224,14 @@ export default async function PublicPortalPage({ params }: PortalPageProps) {
                                         key="publicacoes"
                                         publicacoes={publicacoes}
                                         linhasPesquisa={linhas}
+                                    />
+                                ) : null
+
+                            case "graficos":
+                                return has("F16") ? (
+                                    <PublicationsChart
+                                        key="graficos"
+                                        publicacoes={publicacoes}
                                     />
                                 ) : null
 
